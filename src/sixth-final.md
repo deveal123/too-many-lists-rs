@@ -1,12 +1,12 @@
-# Final Code
+# 최종 코드 (Final Code)
 
-I can't believe I actually just made you sit through me actually reimplementing std::collections::LinkedList from scratch, with all the fiddly little pedantry and mistakes I made along the way.
+과정 내내 제가 징징댔던 온갖 자질구레한 똥고집과 수치스러운 실수들까지 꾸역꾸역 참아가며, `std::collections::LinkedList`를 바닥부터 다시 구현하는 꼬라지를 끝까지 지켜봐 주시다니 정말 믿기지가 않네요.
 
-I did it, the book is done, I can finally rest.
+제가 해냈습니다, 이 책도 끝났고, 이제 드디어 실컷 잘 수 있겠네요.
 
-Alright, here's all 1200 lines of our complete rewrite of  in all of its glory. This should be the same text as [this commit](https://github.com/contain-rs/linked-list/commit/5b69cc29454595172a5167a09277660342b78092).
+자, 여기 우리가 영혼을 갈아 넣어 완벽하게 재창조한 1200줄짜리 찬란한 전체 코드 내용입니다. 아마 [이 커밋(this commit)](https://github.com/contain-rs/linked-list/commit/5b69cc29454595172a5167a09277660342b78092)의 내용과 완벽히 똑같을 겁니다.
 
-I'll put some polish and docs back on and publish 0.1.0 later.
+나중에 여유가 좀 생기면 여기에 예쁘게 주석(docs)이랑 광택 좀 내서 0.1.0 버전으로 정식 출간(publish)하겠습니다.
 
 ```rust
 use std::cmp::Ordering;

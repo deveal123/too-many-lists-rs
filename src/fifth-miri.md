@@ -1,34 +1,34 @@
-# Miri
+# 미로 (Miri)
 
-*nervously laughs* This unsafe stuff is so easy, I don't know why everyone says otherwise. Our program works perfectly.
+*멋쩍게 웃음 (nervously laughs)* 이 unsafe 기능은 막상 해보니 너무 쉽네요, 대체 왜 다들 그렇게 호들갑인지 모르겠습니다. 우리 프로그램은 지금 완벽하게 돌아가고 있거든요.
 
-> **NARRATOR:** 🙂
+> **해설자:** 🙂
 
-...right?
+...맞죠? (right?)
 
-> **NARRATOR:** 🙂
+> **해설자:** 🙂
 
-Well, we're writing `unsafe` code now, so the compiler can't help us catch mistakes as well. It could be that the tests *happened* to work, but were actually doing something non-deterministic. Something Undefined Behavioury.
+글쎄요, 우린 지금 `unsafe` 코드를 작성하고 있기 때문에 컴파일러조차 우리의 실수를 눈치채고 잡아줄(catch mistakes) 수 없습니다. 우리 테스트 케이스들이 지금 표면적으로 운 좋게(happened to) 잘 도는 것처럼 보일 뿐, 내부적으론 비결정론적인(non-deterministic) 무언가를 하고 있을지도 모릅니다. 예를 들면, 미정의 동작(Undefined Behavioury) 같은 끔찍한 짓 말이죠.
 
-But what can we do? We've pried open the windows and snuck out of rustc's classroom. No one can help us now.
+하지만 뭘 어쩌겠습니까? 우리는 이미 창문을 뜯고 rustc 컴파일러의 교실 밖으로 벗어났습니다(snuck out). 이젠 아무도 우릴 도와줄 수 없어요(No one can help us now).
 
-...Wait, who's that sketchy looking person in the alleyway?
+...잠깐, 골목길 저 구석에 서 있는 저 수상한(sketchy) 녀석은 대체 누구죠?
 
-*"Hey kid, you wanna interpret some Rust code?"*
+*"어이 꼬마, Rust 코드를 좀 통역(interpret) 해보고 싶지 않나?"*
 
-Wh- no? Why,
+뭐- 아뇨? 그게 왜요,
 
-*"It's wild man, it can validate that the actual dynamic execution of your program conforms to the semantics of Rust's memory model. Blows your mind..."*
+*"이거 완전 끝내준다고, 이 녀석은 네 프로그램의 실제 동적 실행(dynamic execution) 과정이 Rust 본연의 메모리 모델 의미론 규율에 부합하는지 완벽하게 검증(validate)해 줄 수 있지. 진짜 깜짝 놀랄 거다..."*
 
-What?
+네?
 
-*"It checks if you Do An Undefined Behaviour."*
+*"이 녀석이 네가 미정의 동작을 저질렀는지 안 저질렀는지 완벽하게 잡아내 준단 소리다."*
 
-I guess I could try interpretters just *once*.
+뭐 원하신다면 인터프리터 툴인지 뭔지 딱 한 번(*once*)만 속는 셈 치고 써 보기야 하겠습니다.
 
-*"You've got rustup installed right?"*
+*"너 rustup 정도는 깔려 있지?"*
 
-Of course I do, it's *the* tool for having an up to date Rust toolchain!
+당연하죠, 최신 Rust 툴체인으로 유지하기 위해 절대 빠지면 안 될 핵심 툴(*the* tool) 아닙니까!
 
 ```text
 > rustup +nightly-2022-01-21 component add miri
@@ -36,43 +36,24 @@ Of course I do, it's *the* tool for having an up to date Rust toolchain!
 info: syncing channel updates for 'nightly-2022-01-21-x86_64-pc-windows-msvc'
 info: latest update on 2022-01-21, rust version 1.60.0-nightly (777bb86bc 2022-01-20)
 info: downloading component 'cargo'
-info: downloading component 'clippy'
-info: downloading component 'rust-docs'
-info: downloading component 'rust-std'
-info: downloading component 'rustc'
-info: downloading component 'rustfmt'
-info: installing component 'cargo'
-info: installing component 'clippy'
-info: installing component 'rust-docs'
-info: installing component 'rust-std'
-info: installing component 'rustc'
-info: installing component 'rustfmt'
+...
 info: downloading component 'miri'
 info: installing component 'miri'
 ```
 
-What did you just install on my computer!?
+방금 내 컴퓨터에 무슨 짓을 해서 뭘 깔아둔(install on my computer) 거죠!?
 
-*"The Good Stuff"*
+*"진짜배기 보물성 약 덩어리(The Good Stuff)지"*
 
-> **NARRATOR:** Some weird stuff going on with toolchain versions:
->
-> The tool we're installing, `miri`, works closely with rustc's internals, 
-> so it's only available for nightly toolchains.
->
-> `+nightly-2022-01-21` tells `rustup` we want to install miri with the rust 
-> nightly toolchain for that date. I'm giving a specific date because sometimes
-> miri falls behind and can't be built for a few nightlies. rustup will
-> automatically download whatever toolchain we specify with `+` if we don't
-> have it installed yet.
->
-> 2022-01-21 is just a nightly I know has miri support, which you can check 
-> [on this status page](https://rust-lang.github.io/rustup-components-history/).
-> You can just use `+nightly` if you're feeling lucky.
+> **해설자:** 툴체인 버전과 얽혀서 뒷배경에 좀 복잡한 일(weird stuff)이 벌어지고 있습니다.
 > 
-> Whenever we invoke miri via `cargo miri` we will also use this `+` syntax to
-> specify the toolchain we installed miri on. If you don't want to have to
-> specify it every time, you can use [`rustup override set`](https://rust-lang.github.io/rustup/overrides.html).
+> 우리가 설치한 툴 `miri`는 rustc 컴파일러 내부(internals)와 긴밀하게 유착 결합 연동(works closely)되어 있기 때문에, 오직 nightly 툴체인 환경에서만 동작합니다.
+> 
+> 저 `+nightly-2022-01-21` 플래그는 `rustup`한테 당장 그날 날짜에 고정된 특정 nightly 툴체인 버전에 맞는 miri를 설치하라고 강제 명령(tells rustup)하는 부분입니다. 굳이 특정 날짜로 박제한 이유는, 가끔 이 miri 녀석이 컴파일러의 발전 속도를 못 맞춰 빌드가 깨지고 펑크 나는(falls behind) nightly 시기들이 있기 때문입니다. 만약 우리가 지정한 버전의 툴체인이 없다면 rustup이 알아서 스스로 인터넷에서 다운로드(automatically download)해서 설치해 줄 겁니다.
+> 
+> 참고로 2022-01-21은 miri가 정상적으로 굴러간다고(miri support) 제가 직접 확인한 nightly 박제 날짜입니다. [이 공식 현황판 페이지](https://rust-lang.github.io/rustup-components-history/)에서도 확인할 수 있죠. 오늘 좀 운이 좋은 것 같다(feeling lucky) 싶으면 그냥 `+nightly` 쳐서 모험을 떠나보셔도 좋습니다.
+> 
+> 앞으로 우리가 `cargo miri`를 호출할 때마다, 우린 반드시 이 `+` 문법을 대동하여 miri가 깔려있는 툴체인 버전을 명확히 명시(specify) 해줘야 합니다. 매번 타이핑 치기 번거롭다면, [`rustup override set`](https://rust-lang.github.io/rustup/overrides.html)을 써서 특정 디렉토리에 고정해버릴 수도 있습니다.
 
 ```text
 > cargo +nightly-2022-01-21 miri test
@@ -81,9 +62,9 @@ I will run `"cargo.exe" "install" "xargo"` to install
 a recent enough xargo. Proceed? [Y/n]
 ```
 
-UH WHAT ON EARTH IS XARGO?
+아니 시발 대체 XARGO가 또 뭡니까?
 
-*"It's fine, don't worry about it."*
+*"다 괜찮아, 너무 걱정하지 마(don't worry about it)."*
 
 ```text
 > y
@@ -91,18 +72,13 @@ UH WHAT ON EARTH IS XARGO?
     Updating crates.io index
   Installing xargo v0.3.24
 ...
-    Finished release [optimized] target(s) in 10.65s
-  Installing C:\Users\ninte\.cargo\bin\xargo-check.exe
-  Installing C:\Users\ninte\.cargo\bin\xargo.exe
-   Installed package `xargo v0.3.24` (executables `xargo-check.exe`, `xargo.exe`)
-
 I will run `"rustup" "component" "add" "rust-src"` to install 
 the `rust-src` component for the selected toolchain. Proceed? [Y/n]
 ```
 
-UH???
+아??? (UH???)
 
-*"Who doesn't love having a copy of Rust's source code?"*
+*"이 세상에 그 아름다운 Rust 소스 코드(Rust's source code) 원본 복사본을 소장하는 걸 마다할 이가 어디 있겠어?"*
 
 ```text
 > y
@@ -111,7 +87,7 @@ info: downloading component 'rust-src'
 info: installing component 'rust-src'
 ```
 
-*"Aw yeah it's ready, here's the good part."*
+*"오예 준비 완료(it's ready). 자 이제 진또배기 본 게임 시작이다."*
 
 ```text
    Compiling lists v0.1.0 (C:\Users\ninte\dev\tmp\lists)
@@ -134,94 +110,61 @@ error: Undefined Behavior: trying to reborrow for Unique at alloc84055,
       violated are still experimental
     = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/stacked-borrows.md 
       for further information
-
-    = note: inside `std::option::Option::<std::boxed::Box<fifth::Node<i32>>>::map::<i32, [closure@src\fifth.rs:31:30: 40:10]>` at \lib\rustlib\src\rust\library\core\src\option.rs:846:18
-
-note: inside `fifth::List::<i32>::pop` at src\fifth.rs:31:9
-   --> src\fifth.rs:31:9
-    |
-31  | /         self.head.take().map(|head| {
-32  | |             let head = *head;
-33  | |             self.head = head.next;
-34  | |
-...   |
-39  | |             head.elem
-40  | |         })
-    | |__________^
-note: inside `fifth::test::basics` at src\fifth.rs:74:20
-   --> src\fifth.rs:74:20
-    |
-74  |         assert_eq!(list.pop(), Some(1));
-    |                    ^^^^^^^^^^
-note: inside closure at src\fifth.rs:62:5
-   --> src\fifth.rs:62:5
-    |
-61  |       #[test]
-    |       ------- in this procedural macro expansion
-62  | /     fn basics() {
-63  | |         let mut list = List::new();
-64  | |
-65  | |         // Check empty list behaves right
-...   |
-96  | |         assert_eq!(list.pop(), None);
-97  | |     }
-    | |_____^
- ...
+...
 error: aborting due to previous error
 ```
 
-Woah. That's one heck of an error.
+와. 이 오류 진짜 장난 아니게 끔찍하네요(one heck of an error).
 
-*"Yeah, look at that shit. You love to see it."*
+*"캬아, 저 끔찍한 쓰레기 똥더미 같은 에러 메시지 꼬라지 좀 봐. 진짜 보면 눈물 나게 짜릿하지(You love to see it)."*
 
-Thank you?
+고... 고맙습니다?
 
-*"Here take the bottle of estradiol too, you're gonna need it later."*
+*"여기 덤으로 이 정신과 약 에스트로겐 진통제 한 병(bottle of estradiol)도 챙겨 둬, 분명히 좀 이따 대가리 터질 때 절실히 필요할(gonna need it later) 테니까."*
 
-Wait why?
+잠깐만 왜요? 대체 내 뇌가 무슨 꼴을 보게 되길래?
 
-*"You're about to think about memory models, trust me."*
+*"너 지금 당장부터 메모리 모델(memory models)이라는 지옥 심연의 철학관에 몸 바쳐 치열하게 고민(about to think about)해야 하거든, 이 전문가 말을 믿어(trust me)."*
 
-> **NARRATOR:** The mysterious person then proceeded to transform into a fox and scampered through a hole in the wall. The author then stared into the middle distance for several minutes while they tried to process everything that just happened.
-
+> **해설자:** 그러곤 이 수상쩍은 골목길 여우(fox) 둔갑 괴인 놈은 구멍 속으로 냅다 도망쳐버렸습니다(scampered). 안쓰러운 저희 저자는 방금 전 자기 눈앞에서 뭐가 번쩍 휘몰아친 건지 상황을 간신히 소화(process)하느라 몇 분간(several minutes) 하염없이 허공만 멍하니 바라보고 있었습니다.
 
 -------
 
-The mysterious fox in the alleyway was right about more than just my gender: miri really is The Good Shit.
+그 골목길 마약 밀매 여우놈은 제 성별 정체성을 맞춘 것뿐만 아니라(right about more than just my gender) 또 한 가지 팩트를 기가 막히게 적중시켰습니다: miri 이 녀석은 진짜배기 보물성 약쟁이 투약품(The Good Shit)이라는 사실 말입니다.
 
-Ok so what *is* [miri](https://github.com/rust-lang/miri)?
+그럼 대체 [miri](https://github.com/rust-lang/miri)라는 놈의 정체성(what *is*)이 뭡니까?
 
-> An experimental interpreter for Rust's mid-level intermediate representation (MIR). It can run binaries and test suites of cargo projects and detect certain classes of undefined behavior, for example:
+> Rust의 중간 언어(MIR)를 해석해서 시뮬레이션으로 굴려보는 실험적인 인터프리터(interpreter). 얘는 cargo 프로젝트의 바이너리 파편이나 테스트 코드들을 단일 실행(run)시키면서 특정 부류의 치명적인 미정의 동작(undefined behavior) 폭탄들을 칼같이 적발해낼 수 있습니다:
 >
-> * Out-of-bounds memory accesses and use-after-free
-> * Invalid use of uninitialized data
-> * Violation of intrinsic preconditions (an unreachable_unchecked being reached, calling copy_nonoverlapping with overlapping ranges, ...)
-> * Not sufficiently aligned memory accesses and references
-> * Violation of some basic type invariants (a bool that is not 0 or 1, for example, or an invalid enum discriminant)
-> * Experimental: Violations of the Stacked Borrows rules governing aliasing for reference types
-> * Experimental: Data races (but no weak memory effects)
+> * 배열 밖 불법 침범(Out-of-bounds) 및 할당 해제된 찌꺼기 메모리 재사용(use-after-free)
+> * 초기화 안 된 더미 데이터 불량 쓰레기 무단 남용(use of uninitialized data)
+> * 내재 필수 규칙 위반 (도달 불능 블록인 `unreachable_unchecked` 가 뚫려 실행되거나, 범위가 겹치는데 뻔뻔하게 `copy_nonoverlapping` 복사 함수를 남발하는 등의 내재 규칙 기만)
+> * 메모리 정렬 기준에 맞지 않는(Not sufficiently aligned) 엉망진창 포인터 메모리 무단 접근
+> * 근본 타입 규칙 파괴(Violation of some basic type invariants) (예컨대 값이 0이나 1이 아닌 불량 bool 타입, 또는 판별자가 박살 난 쓰레기 enum 데이터)
+> * (실험실 기능: Experimental) 생태계 안전선을 관장하는(governing) Stacked Borrows 차용 스택 누적 동기화 규칙 전면 위법(Violations) 저항 적발
+> * (실험실 기능: Experimental) 배타 참조 무시 데이터 레이스(Data races) 충돌 적발 판별 (단 약한 메모리 부작용 예외)
 >
-> On top of that, Miri will also tell you about memory leaks: when there is memory still allocated at the end of the execution, and that memory is not reachable from a global static, Miri will raise an error.
+> 덤으로, Miri는 메모리 누수(memory leaks) 구멍 적발까지 도와줍니다: 즉 프로그램의 런타임 실행이 모조리 끝난 뒤에도(at the end of the execution) 여전히 해제되지 못하고 방치되어 남겨진 병든 할당된 고아 메모리 좀비 조각들 중, 글로벌 정적 스태틱 루트(global static)에서 직접 도달할 연결선마저 끊어진 채 미아가 된 떠돌이 불법 무연고 데이터 잔해물 시체들이 생존 중탁 남아있다면 즉시 Miri가 미친듯 누적 에러 호루라기(raise an error) 경고를 집행해 줍니다.
 >
 > ...
 >
-> However, be aware that Miri will not catch all cases of undefined behavior in your program, and cannot run all programs
+> 하지만 절대 망각하지 말아야 할 치명적 주의사항(be aware)이 있습니다, 사실 Miri는 당신의 똥 구더기 프로그램이 터뜨리는 그 모든 수만 가지 종류의 미정의 동작(undefined behavior) 대참사 버그들을 100% 모조리 완벽히 적발해 낚아채진(catch all cases) 못할뿐더러, 세상의 모든 기기묘묘한 프로그램 로직을 완벽 렌더링 구동(cannot run all programs) 돌려댈 수도 없는 맹점을 가집니다.
 
-TL;DR: it interprets your program and notices if you break the rules *at runtime* and Do An Undefined Behaviour. This is necessary because Undefined Behaviour is *generally* a thing that happens at runtime. If the issue could be found at compile time, the compiler would just make it an error!
+가볍게 세 줄 핵심 정리(TL;DR): Miri는 너의 코드를 동적으로 한 줄 한 줄 렌더링 해석(interprets)하며, 런타임(at runtime) 중에 코드가 금지된 규칙을 부수고(break the rules) 미정의 동작(Undefined Behaviour) 범죄를 저지르는 순간 적발해 내는 경찰입니다. 이건 무척이나 필수불가결(necessary)한 제약 체계인데, 애당초 미정의 동작(Undefined Behaviour)이라는 불법 오류 폭탄의 지상 본질 성격 자체가 기본적으로(generally) 컴파일 타임이 아니라 이렇듯 꼭 런타임 중에 야생에서 튀어나오는 종자이기 때문입니다. 뭐 진작 컴파일 타임(compile time) 정적 설계 렌더 엑스레이 단계에서 바로 조기 적발(could be found)될 만한 하찮은 실수 수준이었다면야, 위대하신 컴파일러 님께서 진작 빌드 스톱 빠꾸 강퇴 린치 에러 단죄(make it an error)를 시켰겠죠!
 
-If you're familiar with tools like ubsan and tsan: it's basically that but all together and more extreme.
+C 진영 언어권에서 흔한 ubsan(UndefinedBehaviorSanitizer) 이나 tsan(ThreadSanitizer) 등속의 검열 도구 잡다구리(tools)와 꽤 익숙하시다고(familiar)요? 그럼 말 다 했네요: Miri 이 놈은 그 잡다한 유틸 도구 병정들을 싹 다 한데 뒤죽박죽 믹스 총 스까 결집 병합 영끌 결합 우주 통합(all together) 융합시킨, 훨씬 지독히 강박 병적 극악 잔혹하고 하드코어한 대왕 무결(more extreme) 판사님입니다.
 
 -------
 
-Miri is now hanging outside the classroom window with a knife. A learning knife.
+자 이제 잔혹한 숙청 도구 검열관 Miri가 학습용 단검(knife. A learning knife)을 음산히 거머쥔 채 우리들의 스쿨 교실 창문 너머 밖에서 이빨 앙물고 대기 매복(hanging outside) 타는 중입니다.
 
-If we ever want miri to check our work, we can ask them to interpret our test suite with
+만약 우리가 Miri님께 부디 내 쓰레기 같은 코드 결과물이 무탈 안전한지 부디 심판 심사 시험 평가 진단 판독 검열 해석(check our work) 단죄 받기를 하사 원한다면야, 다음의 주문을 암송하여 그분들을 소환 심판 단위 제단(interpret our test suite)으로 인도할 수 있습니다:
 
 ```text
 > cargo +nightly-2022-01-21 miri test
 ```
 
-Now let's take a closer look at what they carved into our desk:
+좋소 자 이제 놈들이 우리의 책상 표면 가죽을 무자비하게 긁고 파내 갈겨 후벼 새긴(carved into our desk) 그 끔찍한 협박 판결 에러 낙인 메시지의 속뜻 진상을 더 밀착 확대 깊숙 집요하게 돋보기 세밀 정독 대조(take a closer look at) 감상해 보죠:
 
 ```text
 error: Undefined Behavior: trying to reborrow for Unique at alloc84055, but parent tag <209678> does not have an appropriate item in the borrow stack
@@ -243,6 +186,6 @@ error: Undefined Behavior: trying to reborrow for Unique at alloc84055, but pare
       for further information
 ```
 
-Well I can see we made an error, but that's a confusing error message. What's the "borrow stack"?
+뭐, 우리가 개똥 치명적 불법 패륜 병크 쓰레기 코딩 에러 범죄(made an error)를 지렸단 눈물 참사 팩트 자체만큼은 뼈저리게 알겠는데, 근데 이 빌어먹을 판결문 에러 메시지 꼬라지가 너무 씨발 난데없는 외계어 모순 난무 카오스 정신병 급 헛소리 복잡 현학 기만(confusing) 오류 메시지라 숨이 턱 막힙니다. 뭐 대관절 대체 저놈의 "차용 스택(borrow stack)" 이란 개뼉다구 개소리가 대체 무슨(What's the) 해괴망측한 뜻이랍니까?
 
-We'll try to figure that out in the next section.
+대체 저 외계어 신장 판결의 실체 족보 진상 의미가 뭔지 그 내부 봉인 퍼즐 진실 내막 속 파헤치기 사변 타파 해소(figure that out) 진단 공작은 바로 다음 속편 연재 다음 장의 파트 단락에서 주먹구구 야무지게 돌파 시도 파보도록 합시다.

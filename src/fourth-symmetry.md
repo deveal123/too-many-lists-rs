@@ -1,8 +1,8 @@
-# Symmetric Junk
+# 대칭 구조의 쓰레기들 (Symmetric Junk)
 
-Alright let's get all that combinatoric symmetry over with.
+자, 이제 이 지긋지긋한 조합론적 좌우쌍 대칭(combinatoric symmetry) 패턴의 노동을 싹 다 한방에 해치워 끝내버립시다(get all that over with).
 
-All we have to do is some basic text replacement:
+우리가 할 일이라곤 그저 기본적인 텍스트 복사-붙여넣기 글자 치환 작업뿐입니다:
 
 ```text
 tail <-> head
@@ -10,7 +10,7 @@ next <-> prev
 front -> back
 ```
 
-Oh, also we need to add `_mut` variants for peeking.
+오, 그리고 덤으로 훔쳐보기(peeking) 용 `_mut` 가변 참조 변종 메서드 버전들도 잊지 말고 미리미리 추가해 박아놔야 합니다.
 
 ```rust ,ignore
 use std::cell::{Ref, RefCell, RefMut};
@@ -66,7 +66,7 @@ pub fn peek_front_mut(&mut self) -> Option<RefMut<T>> {
 }
 ```
 
-And massively flesh out our tests:
+그리고 내친김에 우리들의 테스트 관문 검역소 코드도 이 대칭 구도에 맞게 대거 살을 왕창 찌워 도배(massively flesh out)해 보강해 줍시다:
 
 
 ```rust ,ignore
@@ -74,53 +74,53 @@ And massively flesh out our tests:
 fn basics() {
     let mut list = List::new();
 
-    // Check empty list behaves right
+    // 빈 깡통 리스트 녀석이 똑바로 정신 차리고 행동거지 군기 똑바로 처먹었는지 검수
     assert_eq!(list.pop_front(), None);
 
-    // Populate list
+    // 대가리에 알맹이 좀 구겨 넣어 바구니 살찌우기
     list.push_front(1);
     list.push_front(2);
     list.push_front(3);
 
-    // Check normal removal
+    // 정상적으로 예의 바르게 배출해내는지 정방향 반환 검문
     assert_eq!(list.pop_front(), Some(3));
     assert_eq!(list.pop_front(), Some(2));
 
-    // Push some more just to make sure nothing's corrupted
+    // 혹시라도 이 요망한 놈이 몰래 뒤로 슬쩍 고장 나(corrupted) 있진 않은지 압박 검증차 기습 추가 투입 강행 발동
     list.push_front(4);
     list.push_front(5);
 
-    // Check normal removal
+    // 다시금 정상적으로 구역에 맞게 똑바로 예의 바르게 배출해내는지 2차 정방향 반환 검문
     assert_eq!(list.pop_front(), Some(5));
     assert_eq!(list.pop_front(), Some(4));
 
-    // Check exhaustion
+    // 마지막으로 단 한 방울의 국물도 남김없이 완전 씨가 말라 탈수 소진 탈곡 바닥 고갈(exhaustion) 상태의 나락 생체 한계 파괴 테스트
     assert_eq!(list.pop_front(), Some(1));
     assert_eq!(list.pop_front(), None);
 
-    // ---- back -----
+    // ---- 이 밑으론 전부 대칭 꼬리(back) 버젼 -----
 
-    // Check empty list behaves right
+    // 뒤에서 쑤셔도 빈 깡통 행동거지 군기 똑바로 처먹었는지 검수 똑같이 점검
     assert_eq!(list.pop_back(), None);
 
-    // Populate list
+    // 이번엔 꼬리 쪽을 쑤셔 알맹이 좀 구겨 넣어 바구니 살찌우기
     list.push_back(1);
     list.push_back(2);
     list.push_back(3);
 
-    // Check normal removal
+    // 정상 배출 역방향 검문
     assert_eq!(list.pop_back(), Some(3));
     assert_eq!(list.pop_back(), Some(2));
 
-    // Push some more just to make sure nothing's corrupted
+    // 또 기습 모의 투입
     list.push_back(4);
     list.push_back(5);
 
-    // Check normal removal
+    // 또 정상 배출 역방향 2차 점검 검문
     assert_eq!(list.pop_back(), Some(5));
     assert_eq!(list.pop_back(), Some(4));
 
-    // Check exhaustion
+    // 최후의 고갈 바닥 판별 생체 파괴 테스트 2차 종말 단죄
     assert_eq!(list.pop_back(), Some(1));
     assert_eq!(list.pop_back(), None);
 }
@@ -142,8 +142,7 @@ fn peek() {
 }
 ```
 
-Are there some cases we're not testing? Probably. The combinatoric space
-has really blown up here. Our code is at very least not *obviously wrong*.
+솔직히 구멍 숭숭 뚫려 아직 우리가 눈 뜬 장님처럼 검증 못 하고 미처 테스트 통과 안 시켜 넘긴 예외 케이스(cases we're not testing) 사각지대가 존재하냐고요? 아마 그럴 확률 100%(Probably) 일 겁니다. 이 양방향 대칭 조합의 복합 경우의 수 영역 넓이는 진심 여기서 문자 그대로 우주 차원급으로 폭발 급증 팽창(blown up) 해 있기 때문입니다. 그래도 뭐 우리 코드가 최소한 대놓고 바닥에 콧물 흘릴 만큼 *명백히 개노답 병신(obviously wrong)* 썩진 않았을 거라 위안해 봅니다.
 
 ```text
 > cargo test
@@ -166,4 +165,4 @@ test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured
 
 ```
 
-Nice. Copy-pasting is the best kind of programming.
+개조아 (Nice). 역시 그저 대충 머리통 비우고 복붙(Copy-pasting) 찍어내기가 세상에서 통달한 제일 최고로 달달한 황금 프로그래밍 방식입니다.

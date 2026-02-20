@@ -1,28 +1,28 @@
-# Layout
+# 레이아웃 (Layout)
 
-Let us begin by first studying the structure of our enemy. A Doubly-Linked List is conceptually simple, but that's how it decieves and manipulates you. It's the same kind of linked list we've looked at over and over, but the links go both ways. Double the links, double the evil.
+우선 우리 적의 구조를 연구하는 것부터 시작해 봅시다. 이중 연결 리스트(Doubly-Linked List)는 개념적으로만 보면 참 단순하지만, 바로 그 점을 이용해 여러분을 속이고 기만합니다. 우리가 주구장창 지겹도록 봐 왔던 바로 그 연결 리스트가 맞긴 한데, 다만 링크(links)가 양방향으로 뻗어 있을 뿐이죠. 링크가 두 배니, 사악함도 두 배입니다.
 
-So rather than this (gonna drop the Some/None stuff to keep it cleaner):
+그래서 이런 모습 대신 (코드를 깔끔하게 보기 위해 `Some`/`None` 찌꺼기들은 잠시 치워두겠습니다):
 
 ```text
 ... -> (A, ptr) -> (B, ptr) -> ...
 ```
 
-We have this:
+우린 이런 꼴을 보게 됩니다:
 
 ```text
 ... <-> (ptr, A, ptr) <-> (ptr, B, ptr) <-> ...
 ```
 
-This lets you traverse the list from either direction, or seek back and forth with a [cursor](https://doc.rust-lang.org/std/collections/struct.LinkedList.html#method.cursor_back_mut).
+이 덕분에 리스트를 양방향 어디서든 순회(traverse)할 수 있고, [커서(cursor)](https://doc.rust-lang.org/std/collections/struct.LinkedList.html#method.cursor_back_mut)를 이용해 앞뒤로 왔다 갔다 탐색할 수도 있습니다.
 
-In exchange for this flexibility, every node has to store twice as many pointers, and every operation has to fix up way more pointers. It's a significant enough complication that it's a lot easier to make a mistake, so we're going to be doing a lot of testing.
+이러한 유연성을 대가로 얻는 단점은, 모든 노드가 두 배나 많은 포인터를 품고 있어야 하며, 모든 연산마다 훨씬 더 많은 포인터들을 일일이 뜯어고쳐야(fix up) 한다는 점입니다. 이건 꽤나 묵직한 복잡도로 다가오기 때문에 실수하기가 몹시 쉬워집니다. 그래서 우린 앞으로도 뼈 빠지게 다량의 테스트를 굴리게 될 겁니다.
 
-You might have also noticed that I intentionally haven't drawn the *ends* of the list. This is because this is one of the places where there are genuinely defensible options for our implementation. We *definitely* need our implementation to have two pointers: one to the start of the list, and one to the end of the list.
+눈치채셨을지도 모르겠지만, 제가 의도적으로 리스트의 *양쪽 끝(ends)* 부분은 그려 넣지 않았습니다. 왜냐하면 바로 이 끝부분 처리야말로 우리 구현체에서 참으로 그럴싸하고 방어하기 좋은(defensible) 선택지들이 오가는 논쟁의 핵심 구역 중 하나이기 때문입니다. 어쨌든 우리 리스트 구현체는 결단코 *무조건(definitely)* 두 개의 포인터 포스트를 세워야 합니다: 하나는 리스트의 시작점, 다른 하나는 리스트의 끝점을 가리키는 용도로 말이죠.
 
-There are two notable ways to do this in my mind: "traditional" and "dummy node".
+제 머릿속에 떠오르는 가장 주목할 만한 해법으론 두 가지 방식이 있습니다: 바로 "전통적인(traditional)" 방식과 "더미 노드(dummy node)" 방식입니다.
 
-The traditional approach is the simple extension of how we did a Stack &mdash; just store the head and tail pointers on the stack:
+전통적인 방식은 우리가 저번 스택(Stack)을 만들 때 써먹었던 원리의 단순한 연장선입니다 &mdash; 그저 머리(head) 포인터와 꼬리(tail) 포인터를 스택(stack) 위에 떡하니 저장해 두는 거죠:
 
 ```text
 [ptr, ptr] <-> (ptr, A, ptr) <-> (ptr, B, ptr)
@@ -30,9 +30,9 @@ The traditional approach is the simple extension of how we did a Stack &mdash; j
   +----------------------------------------+
 ```
 
-This is fine, but it has one downside: corner cases. There are now two edges to our list, which means twice as many corner cases. It's easy to forget one and have a serious bug.
+이것도 괜찮습니다만, 여기엔 치명적인 단점이 하나 도사리고 있습니다: 바로 예외 케이스(corner cases)들이죠. 이제 우리 리스트엔 양쪽으로 가장자리(edges)가 두 개나 생겨버렸고, 이는 곧 신경 써야 할 예외 케이스도 두 배로 늘어났다는 소리입니다. 이 중 하나라도 깜빡 잊어먹기 십상이고, 그 즉시 치명적인 버그로 직결됩니다.
 
-The dummy node approach attempts to smooth out these corner cases by adding an extra node to our list which contains no data but links the two ends together into a ring:
+반면 더미 노드 방식은 우리 리스트에 실질적인 데이터 내용물은 1도 안 들어있지만 양 끝단을 동그랗게 반지 링(ring) 모양으로 이어주는 가상의 잉여 노드를 하나 더 추가함으로써, 이런 골치 아픈 예외 케이스들을 부드럽게 무마시켜(smooth out) 보려는 시도입니다:
 
 ```text
 [ptr] -> (ptr, ?DUMMY?, ptr) <-> (ptr, A, ptr) <-> (ptr, B, ptr)
@@ -40,7 +40,7 @@ The dummy node approach attempts to smooth out these corner cases by adding an e
            +-------------------------------------------------+ 
 ```
 
-By doing this, every node *always* has actual pointers to a previous and next node in the list. Even when you remove the last element from the list, you just end up stitching the dummy node to point at itself:
+이렇게 구성해 놓으면, 모든 노드는 *항상(always)* 리스트 내의 이전 노드와 다음 노드를 가리키는 명확한 실체 포인터를 보유하게 됩니다. 심지어 리스트에서 마지막 남은 원소 하나마저 쏙 빼내버릴지라도, 결국엔 그 더미 노드가 자기 자신을 빙글빙글 가리키도록 양 끝을 꿰매어주기(stitching)만 하면 끝납니다:
 
 ```text
 [ptr] -> (ptr, ?DUMMY?, ptr) 
@@ -48,25 +48,25 @@ By doing this, every node *always* has actual pointers to a previous and next no
            +-------------+
 ```
 
-There is a part of me that finds this *very* satisfying and elegant. Unfortunately, it has a couple practical problems:
+제 마음 한구석엔 이런 방식을 *매우(very)* 만족스럽고 우아하다며 극찬하는 자아도 분명 존재합니다. 하지만 불행하게도 여긴 몇 가지 현실적인 골칫거리(practical problems)들이 따릅니다:
 
-Problem 1: An extra indirection and allocation, especially for the empty list, which must include the dummy node. Potential solutions include:
+문제점 1: 추가적인 간접 참조(indirection)와 메모리 할당 구역이 필요해집니다. 특히 아무것도 없는 깡통 빈 리스트일 때도 무조건 저 더미 노드를 억지로 품고 있어야 하니까요. 이에 대한 잠재적 해결책들은 대략 다음과 같습니다:
 
-* Don't allocate the dummy node until something is inserted: simple and effective, but it adds back some of the corner cases we were trying to avoid by using dummy pointers!
+* 뭔가 삽입되기 전까진 아예 더미 노드를 할당하지 않는다: 아주 단순명쾌하고 효과적입니다만, 결과적으로 우리가 애초에 더미 포인터를 써서 회피해 보려던 바로 그 예외 케이스들을 다시 원상 복구 시켜 불러들이는 꼴이 되어버립니다!
 
-* Use a static copy-on-write empty singleton dummy node, with some really clever scheme that lets the Copy-On-Write checks piggy-back on normal checks: look I'm really tempted, I really do love that shit, but we can't go down that dark path in this book. Read [ThinVec's sourcecode](https://docs.rs/thin-vec/0.2.4/src/thin_vec/lib.rs.html#319-325) if you want to see that kind of perverted stuff.
+* 정적으로 선언된 쓰기 복사(copy-on-write) 전용의 텅 빈 싱글톤 더미 노드를 하나 박아두고, 쓰기 복사 검증 절차가 일반 검사 로직에 교묘하게 꼽사리 끼어 무임승차(piggy-back)하게 만드는 개쌉천재적인 기믹 꼼수(clever scheme)를 쓴다: 솔직히 말해서 존나 구미가 당기긴 합니다, 전 저런 미친 짓거리(shit)를 진심으로 열렬히 사랑하거든요. 하지만 안타깝게도 이 책에서 차마 그런 어둠의 심연(dark path) 루트를 타게 해드릴 순 없습니다. 그런 종류의 변태적인 미친 코드(perverted stuff)가 죽도록 보고 싶으시다면 [ThinVec의 소스코드(ThinVec's sourcecode)](https://docs.rs/thin-vec/0.2.4/src/thin_vec/lib.rs.html#319-325)를 직접 한번 까보시길 권합니다.
 
-* Store the dummy node on the stack - not practical in a language without C++-style move-constructors. I'm sure there's something weird thing we could do here with [pinning](https://doc.rust-lang.org/std/pin/index.html) but we're not gonna.
+* 더미 노드를 그냥 콜 스택(stack) 위에 때려 박아둔다 - 애석하지만 C++ 스타일의 이동 생성자(move-constructors) 따위가 없는 이 동네 언어에선 써먹기엔 좀 무리수(not practical)입니다. 뭐 분명히 [고정(pinning)](https://doc.rust-lang.org/std/pin/index.html) 같은 걸 써먹어서 뭔가 해괴망측한 변태 짓거리(weird thing)를 해볼 여지도 있긴 하겠으나, 우린 안 할 겁니다.
 
-Problem 2: What *value* is stored in the dummy node? Sure if it's an integer it's fine, but what if we're storing a list full of `Box`? It may be impossible for us to initialized this value! Potential solutions include:
+문제점 2: 이놈의 더미 노드 안엔 대체 무슨 *값(value)*을 집어넣어야 합니까? 뭐 안에 담긴 게 정수(integer) 따위라면야 대충 숫자나 때려 박으면 그만이니 문제없겠지만, 만약 우리가 `Box`로 꽉꽉 역겨운 리스트를 생성해버렸다면 어쩔 겁니까? 현실적으로 우리가 이 더미 값을 초기화하는 것 자체가 쌩 불가능해질 수도 있습니다! 이에 대한 잠재적 해결책들은 대략 이렇습니다:
 
-* Make every node store `Option<T>`: simple and effective, but also bloated and annoying.
+* 그냥 속 편하게 모든 노드가 `Option<T>`를 품게 만든다: 참 단순하고 효과적이긴 한데, 덤으로 쓸데없이 뚱뚱해지고 번거로워져서 개빡칩니다(bloated and annoying).
 
-* Make every node store [`MaybeUninit<T>`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html). Horrifying and annoying.
+* 아예 모든 노드가 대놓고 [`MaybeUninit<T>`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html)를 저장하게 만든다. 존나 소름 끼치고 짜증 납니다(Horrifying and annoying).
 
-* *Really* careful and clever inheritance-style type punning so the dummy node doesn't include the data field. This is also tempting but it's extremely dangerous and annoying. Read [BTreeMap's source](https://doc.rust-lang.org/1.55.0/src/alloc/collections/btree/node.rs.html#49-104) if you want to see that kind of perverted stuff.
+* 상속(inheritance) 비스무리한 기법으로 타입 시스템을 벼랑 끝에서 줄타기 시키는 아주 *극도로(Really)* 조심스럽고 교묘한 눈속임 타이핑 기만(type punning)을 구사하여, 더미 노드만큼은 그 데이터 필드 자체를 아예 가지지 않도록 증발시켜 버린다. 이 역시 존나리 입맛이 당기는 제안이긴 한데, 극히 치명적으로 뇌졸중 올 만큼 존나게 위험천만하고 개짜증 나는(dangerous and annoying) 수법입니다. 그런 종류의 변태적인 미친 코드(perverted stuff)가 정 보고 싶어 미치시겠다면 [BTreeMap의 소스코드(BTreeMap's source)](https://doc.rust-lang.org/1.55.0/src/alloc/collections/btree/node.rs.html#49-104)를 직접 까보십시오.
 
-The problems really outweigh the convenience for a language like Rust, so we're going to stick to the traditional layout. We'll be using the same basic design as we did for the unsafe queue in the previous chapter:
+Rust 같은 깐깐한 언어에서는 이런 골칫거리들이 차라리 더미 노드가 주는 편리함을 완전히 씹어먹고도 남을 지경(outweigh)이므로, 우리는 얌전히 전통적인 레이아웃(traditional layout) 방식을 고수하기로 타협하겠습니다. 대신 이전 장에서 안전하지 않은 큐(unsafe queue)를 조립할 때 써먹었던 것과 동일한 기초 뼈대 디자인을 우려먹을 요량입니다:
 
 ```rust
 pub struct LinkedList<T> {
@@ -84,6 +84,6 @@ struct Node<T> {
 }
 ```
 
-(Now that we have reached the doubly-linked-deque, we have finally earned the right to call ourselves LinkedList, for this is the True Linked List.)
+(이제 드디어 이중 연결 덱(doubly-linked-deque)이라는 고지에 다다랐으니, 우린 당당히 우리 자신을 무려 '진정한 연결 리스트(True Linked List)'라는 영예로운 칭호, `LinkedList`라 칭할 권리를 획득했습니다.)
 
-This isn't quite a *true* production-quality layout yet. It's *fine* but there's magic tricks we can do to tell Rust what we're doing a bit better. To do that we're going to need to go... deeper.
+사실 이것도 아직 *온전한(true)* 상용 등급의 완성형 레이아웃이라 부르기엔 약~간 급이 딸립니다. 뭐 그냥저냥 *나쁘진 않긴(fine)* 한데, 우리가 과연 뭘 하고 있는지를 Rust님께서 조금이라도 더 똑똑히 알게끔 일러바쳐 줄 수 있는 약간의 마술 쇼 기교(magic tricks)를 부려볼 수 있습니다. 그러기 위해 우린 이제... 더 깊은 심연으로 들어가야만 합니다(go... deeper).

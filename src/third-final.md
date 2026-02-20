@@ -1,7 +1,6 @@
-# Final Code
+# 최종 코드 (Final Code)
 
-That's all I really have to say on the immutable stack. We're getting pretty
-good at implementing lists now!
+불변 스택(immutable stack)에 대해 늘어놓을 말은 정작 이게 끝입니다. 우린 이제 어엿하게 구닥다리 리스트들을 착착 설계해 내는 데에 슬슬 아주 훌륭한(pretty good) 숙련공이 되어가고 있네요!
 
 ```rust
 use std::rc::Rc;
@@ -91,7 +90,7 @@ mod test {
         let list = list.tail();
         assert_eq!(list.head(), None);
 
-        // Make sure empty tail works
+        // 빈 꼬리가 제대로 돌아가는지 다시 찍어먹어 보기
         let list = list.tail();
         assert_eq!(list.head(), None);
     }

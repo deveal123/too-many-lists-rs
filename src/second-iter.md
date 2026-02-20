@@ -1,13 +1,8 @@
 # Iter
 
-Alright, let's try to implement Iter. This time we won't be able to rely on
-List giving us all the features we want. We'll need to roll our own. The
-basic logic we want is to hold a pointer to the current node we want to yield
-next. Because that node may not exist (the list is empty or we're otherwise
-done iterating), we want that reference to be an Option. When we yield an
-element, we want to proceed to the current node's `next` node.
+좋습니다, 내친김에 Iter까지 구현해 봅시다. 이번에는 List가 제공하는 기능에 기댈 수 없습니다. 우리가 직접 만들어야 합니다. 기본적인 로직은 다음에 산출할 요소 포인터를 현재 리스트의 노드에 유지하는 것입니다. 그 노드가 존재하지 않을 수도 있으므로(리스트가 비었거나 반복이 끝났을 경우), 참조자는 Option이 되어야 합니다. 요소를 하나 산출하면, 현재 노드의 `next` 노드로 이동합니다.
 
-Alright, let's try that:
+한번 해봅시다:
 
 ```rust ,ignore
 pub struct Iter<T> {
@@ -48,10 +43,9 @@ error[E0106]: missing lifetime specifier
    |                 ^ expected lifetime parameter
 ```
 
-Oh god. Lifetimes. I've heard of these things. I hear they're a nightmare.
+오 세상에. 라이프타임(Lifetimes)이군요. 악명 높은 그걸 드디어 만났네요.
 
-Let's try something new: see that `error[E0106]` thing? That's a compiler error
-code. We can ask rustc to explain those with, well, `--explain`:
+새로운 것을 시도해 보죠. 저 `error[E0106]` 이라는게 보이시나요? 이건 컴파일러 에러 코드입니다. `--explain`으로 이게 무슨 뜻인지 물어보겠습니다:
 
 ```text
 > rustc --explain E0106
@@ -73,9 +67,7 @@ type MyStr<'a> = &'a str; //correct
 
 ```
 
-That uh... that didn't really clarify much (these docs assume we understand
-Rust better than we currently do). But it looks like we should add
-those `'a` things to our struct? Let's try that.
+음... 별로 명확하게 알려주지 않네요 (우리가 이런 걸 이해할 수 있다고 가정하는 것 같습니다). 하지만 구조체에 저 `'a` 같은 걸 추가해야 한다는 것 같습니다? 어디 한번 해보죠.
 
 ```rust ,ignore
 pub struct Iter<'a, T> {
@@ -101,8 +93,7 @@ error[E0106]: missing lifetime specifier
 error: aborting due to 2 previous errors
 ```
 
-Alright I'm starting to see a pattern here... let's just add these little guys
-to everything we can:
+뭔가 패턴이 보이는 것도 같습니다... 그냥 가능한 모든 곳에 다 저 귀여운 걸 추가해 볼까요:
 
 ```rust ,ignore
 pub struct Iter<'a, T> {
@@ -148,86 +139,53 @@ error[E0063]: missing field `next` in initializer of `second::Iter<'_, _>`
    |         ^^^^ missing `next`
 ```
 
-Oh god. We broke Rust.
+오, 맙소사. 우리가 Rust를 망가뜨렸습니다.
 
-Maybe we should actually figure out what the heck this `'a` lifetime stuff
-even means.
+도대체 이 `'a` 라이프타임이라는 게 뭔지 진짜로 알아봐야겠네요.
 
-Lifetimes can scare off a lot of people because
-they're a change to something we've known and loved since the dawn of
-programming. We've actually managed to dodge lifetimes so far, even though
-they've been tangled throughout our programs this whole time.
+라이프타임은 많은 이들에게 공포의 대상이 되곤 합니다. 기존 프로그래밍 언어에서 친숙했던 것들의 문법을 바꿔버리거든요. 여태껏 우리는 라이프타임을 피해서 코딩해 왔지만, 사실 라이프타임은 우리 프로그램 전체에 뒤얽혀 있었습니다.
 
-Lifetimes are unnecessary in garbage collected languages because the garbage
-collector ensures that everything magically lives as long as it needs to. Most
-data in Rust is *manually* managed, so that data needs another solution. C and
-C++ give us a clear example what happens if you just let people take pointers
-to random data on the stack: pervasive unmanageable unsafety. This can be
-roughly separated into two classes of error:
+가비지 컬렉터(GC)가 있는 언어에서는 마법처럼 알아서 데이터를 유지해주기 때문에 라이프타임이 필요 없습니다. 하지만 Rust에서는 대부분의 데이터가 *수동으로* 관리되므로, 이를 위한 해결책이 필요합니다. C나 C++에서 스택의 데이터에 대한 포인터를 함부로 가져다 썼을 때 벌어지는 문제를 떠올려 보면 그 심각성을 알 수 있습니다:
 
-* Holding a pointer to something that went out of scope
-* Holding a pointer to something that got mutated away
+* 범위를 벗어난(스코프가 끝난) 대상을 가리키는 포인터 유지하기
+* 가변되어(mutated) 내용이 바뀐 대상을 가리키는 포인터 유지하기
 
-Lifetimes solve both of these problems, and 99% of the time, they do this in
-a totally transparent way.
+라이프타임은 이 두 가지 문제를 모두 해결하며, 99%의 경우에는 완전히 투명하게 작동합니다.
 
-So what's a lifetime?
+그렇다면 라이프타임이 도대체 뭔가요?
 
-Quite simply, a lifetime is the name of a region (\~block/scope) of code somewhere in a program.
-That's it. When a reference is tagged with a lifetime, we're saying that it
-has to be valid for that *entire* region. Different things place requirements on
-how long a reference must and can be valid for. The entire lifetime system is in
-turn just a constraint-solving system that tries to minimize the region of every
-reference. If it successfully finds a set of lifetimes that satisfies all the
-constraints, your program compiles! Otherwise you get an error back saying that
-something didn't live long enough.
+아주 간단하게 말해서, 라이프타임은 프로그램 코드 내의 일정한 영역(region, ~block/scope)에 이름을 붙인 것에 불과합니다. 이게 전부입니다. 참조자에 라이프타임 태그가 붙었다는 건, 그 참조자가 해당 *전체* 영역 동안 유효해야 한다고 명시하는 것입니다. 요소들이 각각 참조자가 얼마나 오래 유효해야 하는지(must) 또한 언제까지 유효할 수 있는지(can)에 제약을 둡니다. 이 전체 라이프타임 시스템은 각각의 라이프타임의 유효 범위를 최소화하려고 시도하는 제약 조건 해결(constraint-solving) 시스템일 뿐입니다. 시스템이 모든 요구 조건을 만족시키는 라이프타임 쌍을 발견하면, 프로그램이 컴파일됩니다! 그렇지 못하면, 무언가가 충분히 길게 살아있지 못했다(didn't live long enough)는 에러를 뱉어내게 됩니다.
 
-Within a function body you generally can't talk about lifetimes, and wouldn't
-want to *anyway*. The compiler has full information and can infer all the
-constraints to find the minimum lifetimes. However at the type and API-level,
-the compiler *doesn't* have all the information. It requires you to tell it
-about the relationship between different lifetimes so it can figure out what
-you're doing.
+일반적으로 함수 본문 안에서는 라이프타임에 대해서 왈가왈부할 필요가 없고, 심지어 *그러고 싶지도* 않을 것입니다. 컴파일러가 알아서 최소한의 라이프타임을 계산하고 모든 제약을 찾을 만큼 충분한 정보를 가지고 있으니까요. 하지만 타입과 API 수준으로 올라가면, 컴파일러도 그 모든 정보를 속속들이 *알지 못합니다*. 컴파일러가 우리가 무슨 짓을 벌이려는지 파악할 수 있도록 여러 라이프타임 사이의 관계를 알려주어야 합니다.
 
-In principle, those lifetimes *could* also be left out, but
-then checking all the borrows would be a huge whole-program analysis that would
-produce mind-bogglingly non-local errors. Rust's system means all borrow
-checking can be done in each function body independently, and all your errors
-should be fairly local (or your types have incorrect signatures).
+원칙적으로는 이런 라이프타임 선언을 *전부 생략해도* 되게 만들 수 있겠지만, 그렇게 하면 온 프로그램 전체의 대여(borrows) 상태를 추적해야 하는 방대한 전역 분석 시스템이 되어버리며, 어디서 에러가 났는지도 알 수 없는 괴상한 에러를 토해낼 것입니다. 대신 Rust의 철학은, 모든 빌림 검사(borrow checking)가 각 함수 본문에서 개별 독립적으로 수행되도록 설계되었습니다. 덕분에 모든 에러는 매우 지역적(지엽적)으로 좁혀집니다 (만약 아니라면 당신의 타입 선언 서명이 너무 말도 안 된다는 뜻이겠죠).
 
-But we've written references in function signatures before, and it was fine!
-That's because there are certain cases that are so common that Rust will
-automatically pick the lifetimes for you. This is *lifetime elision*.
+"잠깐, 근데 우린 지금까지 함수 서명에 잘만 참조자들을 썼는데 괜찮았잖아요!"
+맞습니다, 그건 특정 패턴들이 워낙 자주 쓰이다 보니 Rust가 알아서 라이프타임을 자동으로 정해주기 때문입니다. 이것이 바로 *라이프타임 생략(lifetime elision)*입니다.
 
-In particular:
+특히 다음과 같은 경우에 말이죠:
 
 ```rust ,ignore
-// Only one reference in input, so the output must be derived from that input
-fn foo(&A) -> &B; // sugar for:
+// 입력값 참조자가 단 한 개뿐이므로, 반환값 역시 그 입력값 파생일 수밖에 없음
+fn foo(&A) -> &B; // 이는 내부적으론 이런 의미입니다:
 fn foo<'a>(&'a A) -> &'a B;
 
-// Many inputs, assume they're all independent
-fn foo(&A, &B, &C); // sugar for:
+// 입력값이 여러 개라면, 몽땅 서로 연관 없는 독립개체로 취급
+fn foo(&A, &B, &C); // 축약 전 원래 의미:
 fn foo<'a, 'b, 'c>(&'a A, &'b B, &'c C);
 
-// Methods, assume all output lifetimes are derived from `self`
-fn foo(&self, &B, &C) -> &D; // sugar for:
+// 타입에 속한 메서드라면, 출력 라이프타임은 모두 `self`로부터 파생된다고 취급
+fn foo(&self, &B, &C) -> &D; // 축약 전 원래 의미:
 fn foo<'a, 'b, 'c>(&'a self, &'b B, &'c C) -> &'a D;
 ```
 
-So what does `fn foo<'a>(&'a A) -> &'a B` *mean*? In practical terms, all it
-means is that the input must live at least as long as the output. So if you keep
-the output around for a long time, this will expand the region that the input must
-be valid for. Once you stop using the output, the compiler will know it's ok for
-the input to become invalid too.
+그렇다면 `fn foo<'a>(&'a A) -> &'a B`는 무슨 *의미*일까요? 실질적으로, 이것은 입력값이 반드시 최소한 출력값만큼은 길게 살아있어야 한다는 의미입니다. 따라서 출력 변수를 오랫동안 유지한다면, 입력이 유효해야 하는 영역 또한 길어질 것입니다. 출력 변수 사용을 멈추면 컴파일러는 이제 입력값이 무효화되어도 괜찮다는 것을 깨달을 것입니다.
 
-With this system set up, Rust can ensure nothing is used after free, and nothing
-is mutated while outstanding references exist. It just makes sure the
-constraints all work out!
+이러한 시스템을 통해 Rust는 해제된 메모리를 사용하는 것(use after free)을 막고, 밖에서 쓰이고 있는 참조자가 있는데 값이 가변(mutated)되는 것을 완벽하게 막습니다. 제약 조건들만 다 맞아떨어지면 확신할 수 있습니다!
 
-Alright. So. Iter.
+자. 그래서. Iter.
 
-Let's roll back to the no lifetimes state:
+라이프타임이 전혀 없던 첫 상태로 롤백해봅시다:
 
 ```rust ,ignore
 pub struct Iter<T> {
@@ -251,31 +209,31 @@ impl<T> Iterator for Iter<T> {
 }
 ```
 
-We need to add lifetimes only in function and type signatures:
+우리는 함수와 타입 서명에만 라이프타임을 붙이면 됩니다:
 
 ```rust ,ignore
-// Iter is generic over *some* lifetime, it doesn't care
+// Iter는 *어떤* 라이프타임에 대해서 제네릭일 뿐, 특별히 신경 쓰지 않습니다
 pub struct Iter<'a, T> {
     next: Option<&'a Node<T>>,
 }
 
-// No lifetime here, List doesn't have any associated lifetimes
+// 여기선 별다른 라이프타임이 없습니다. List는 특정 라이프타임에 구속되지 않으니까요.
 impl<T> List<T> {
-    // We declare a fresh lifetime here for the *exact* borrow that
-    // creates the iter. Now &self needs to be valid as long as the
-    // Iter is around.
+    // 우리는 이 구역에서야 비로소 iter가 쥐어짜내는 그 *정확한* 대여(borrow) 시점에 국한되는 
+    // 새로운 라이프타임 파이프라인을 선포합니다. 이제 &self는 Iter가 살아 숨쉬는 한
+    // 끝까지 유효해야 합니다.
     pub fn iter<'a>(&'a self) -> Iter<'a, T> {
         Iter { next: self.head.map(|node| &node) }
     }
 }
 
-// We *do* have a lifetime here, because Iter has one that we need to define
+// 오 여긴 구체적 라이프타임을 붙여야만 합니다, 바깥 테두리 Iter에 맞춰 정의해야 하니까요
 impl<'a, T> Iterator for Iter<'a, T> {
-    // Need it here too, this is a type declaration
+    // 여기도 타입을 구체적으로 찍어 명시하는 곳입니다
     type Item = &'a T;
 
-    // None of this needs to change, handled by the above.
-    // Self continues to be incredibly hype and amazing
+    // 본문 내부 구문들은 전혀 바꿀 필요가 없습니다. 저 윗부분이 알아서 보호막을 칩니다.
+    // 우리의 멋진 Self도 언제나 최고입니다.
     fn next(&mut self) -> Option<Self::Item> {
         self.next.map(|node| {
             self.next = node.next.map(|node| &node);
@@ -285,7 +243,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
 }
 ```
 
-Alright, I think we got it this time y'all.
+좋습니다, 이번엔 진짜로 해결한 것 같군요.
 
 ```text
 cargo build
@@ -311,10 +269,9 @@ error[E0308]: mismatched types
 
 (╯°□°)╯︵ ┻━┻
 
-OK. SO. We fixed our lifetime errors but now we're getting some new type errors.
+오케이. 자. 라이프타임 에러 고쳤더니 이제 새로운 타입 에러가 터지네요.
 
-We want to be storing `&Node`'s, but we're getting `&Box<Node>`s. Ok, that's easy
-enough, we just need to dereference the Box before we take our reference:
+우리는 `&Node`를 저장하려고 했는데 이 녀석이 `&Box<Node>`를 반환하고 있습니다. 그건 쉽죠. 그냥 참조자를 따기 전에 Box를 역참조하면 됩니다:
 
 ```rust ,ignore
 impl<T> List<T> {
@@ -364,8 +321,7 @@ error[E0507]: cannot move out of borrowed content
 
 (ﾉಥ益ಥ）ﾉ﻿ ┻━┻
 
-We forgot `as_ref`, so we're moving the box into `map`, which means it would
-be dropped, which means our references would be dangling:
+우리가 멍청하게 `as_ref`를 빼먹어서 통째로 Box 자체를 `map` 내부로 꺼내며(move) 이동시켜 버렸고, 이는 소멸시켜(dropped) 버리겠다는 뜻이므로 우리가 들고나온 참조자는 매달린 포인터(dangling) 쓰레기가 될 것입니다:
 
 ```rust ,ignore
 pub struct Iter<'a, T> {
@@ -415,7 +371,7 @@ error[E0308]: mismatched types
 
 😭
 
-`as_ref` added another layer of indirection we need to remove:
+`as_ref`가 한 겹의 간접 참조를 추가했기 때문에 결과적으로 쓸데없이 이 겹을 제거해야 합니다:
 
 
 ```rust ,ignore
@@ -448,42 +404,30 @@ cargo build
 
 🎉 🎉 🎉
 
-The as_deref and as_deref_mut functions are stable as of Rust 1.40. Before that you
-would need to do `map(|node| &**node)` and `map(|node| &mut**node)`.
-You may be thinking "wow that `&**` thing is really janky", and you're not wrong,
-but like a fine wine Rust gets better over time and we no longer need to do such.
-Normally Rust is very good at doing this kind of conversion implicitly, through
-a process called *deref coercion*, where basically it can insert \*'s
-throughout your code to make it type-check. It can do this because we have the
-borrow checker to ensure we never mess up pointers!
+as_deref 함수와 as_deref_mut 함수는 Rust 1.40부터 안정화(stable)되었습니다. 그 이전 버전에서는 눈물을 흘리며 `map(|node| &**node)`와 `map(|node| &mut**node)` 처럼 기괴하게 작성해야 했습니다.
+`&**`는 좀 별로라고 생각하실 텐데, 그 생각은 완전히 옳습니다. 시간이 갈수록 더 좋아지는 고급 와인처럼 Rust 역시는 진화했고, 이제 그런 더러운 짓을 반복할 필요가 없어졌습니다. 보통 Rust는 저런 역참조 캐스팅(deref coercion)을 꽤 훌륭하게 묵과해주고 알아서 내부적으로 별표 기호(\*)를 이리저리 끼워 맞춰 줍니다.
 
-But in this case the closure in conjunction with the fact that we
-have an `Option<&T>` instead of `&T` is a bit too complicated for it to work
-out, so we need to help it by being explicit. Thankfully this is pretty rare, in my experience.
+하지만 지금 상황에서는 우리가 단순한 `&T`가 아니라 `Option<&T>` 구조체의 함수 내부 로직 클로저 안과 맞물려있기 때문에 타입 강제 시스템이 이를 자동 추론해 풀어내기가 너무 어려웠습니다(too complicated). 그래서 우리가 수명줄을 잡아끌어 명시적으로(explicit) 표기해주어야 구제될 수 있었습니다. 참 다행으로도, 이런 피곤한 경우는 굉장히 드물게 일어납니다.
 
-Just for completeness' sake, we *could* give it a *different* hint with the *turbofish*:
+완벽한 구색을 갖추기 위해(completeness' sake), 이것과는 사뭇 다르지만 소위 *터보피쉬(turbofish)* 문법이라는 꼼수로 이를 벗어날 수도 있습니다:
 
 ```rust ,ignore
     self.next = node.next.as_ref().map::<&Node<T>, _>(|node| &node);
 ```
 
-See, map is a generic function:
+map 녀석도 원래 제네릭(generic) 함수입니다:
 
 ```rust ,ignore
 pub fn map<U, F>(self, f: F) -> Option<U>
 ```
 
-The turbofish, `::<>`, lets us tell the compiler what we think the types of those
-generics should be. In this case `::<&Node<T>, _>` says "it should return a
-`&Node<T>`, and I don't know/care about that other type".
+저 괴상망측하게 생긴 `::<>` 터보피쉬(turbofish)는 우리가 컴파일러에게 제네릭이 무슨 타입이어야 하는지 참견해서 알려줄 수 있는 힌트 창구입니다. `::<&Node<T>, _>`는 "반환할 때 당연히 `&Node<T>` 타입을 토해내라, 그 뒤에 나오는 딴 놈은 상관 안 하니까 알아서 해라"라고 말해주는 것이죠.
 
-This in turn lets the compiler know that `&node` should have deref coercion
-applied to it, so we don't need to manually apply all those \*'s!
+이 덕분에 컴파일러는 `&node` 부분에 자신이 그동안 꽁꽁 숨겨두었던 꼼수 역참조 강제 캐스팅(deref coercion) 스킬을 발동시키기로 결심하고, 우리는 \* 기호 도배질에서 해방될 수 있습니다!
 
-But in this case I don't think it's really an improvement, this was just a
-thinly veiled excuse to show off deref coercion and the sometimes-useful turbofish. 😅
+하지만 이것도 크게 엄청난 개선이라 보기엔 힘드네요, 그저 나름대로 멋있는 역참조 강제 변환과 이따금 유용한 터보피쉬의 모습을 여러분에게 자랑할 핑계(veiled excuse)였을 뿐입니다. 😅
 
-Let's write a test to be sure we didn't no-op it or anything:
+자 혹시 몰라 노-옵(no-op)으로 아무짝에도 쓸모없이 무효화되진 않았는지 한 번만 테스트해 줍시다:
 
 ```rust ,ignore
 #[test]
@@ -514,9 +458,9 @@ test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured
 
 ```
 
-Heck yeah.
+바로 이거죠.
 
-Finally, it should be noted that we *can* actually apply lifetime elision here:
+마지막으로 흥미로운 사실 하나, 결국 여기까지 오면서 사실상 위 상황에서 우리는 눈 딱 감고 거룩한 수명 라이프타임 생략(lifetime elision) 꼼수를 뼛속까지 적용해버려도 무방하다는 고백을 드립니다:
 
 ```rust ,ignore
 impl<T> List<T> {
@@ -526,7 +470,7 @@ impl<T> List<T> {
 }
 ```
 
-is equivalent to:
+이 코드는 놀랍게도:
 
 ```rust ,ignore
 impl<T> List<T> {
@@ -536,10 +480,11 @@ impl<T> List<T> {
 }
 ```
 
-Yay fewer lifetimes!
+이것과 똑같은 코드(equivalent)입니다!
 
-Or, if you're not comfortable "hiding" that a struct contains a lifetime,
-you can use the Rust 2018 "explicitly elided lifetime" syntax,  `'_`:
+적은 라이프타임 만세!
+
+혹시 이게 라이프타임을 숨기고 있는게 싫으시다면 `_`을 써도 됩니다:
 
 ```rust ,ignore
 impl<T> List<T> {

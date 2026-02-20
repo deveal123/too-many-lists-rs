@@ -1,12 +1,10 @@
-# Final Code
+# 최종 코드 (Final Code)
 
-Alright, so with a teeny-tiny dash of unsafety we managed to get a linear
-time improvement over the naive safe queue, and we managed to reuse almost
-all of the logic from the safe stack!
+자, 약간의 안전하지 않은(unsafe) 코드의 도움을 받아서 순진하고 안전했던 큐에 비해 선형 시간 성능 향상을 이루어 냈고, 안전한 스택 코드를 거의 통째로 재사용하는 데도 성공했습니다!
 
-You know, except for that part where miri completely dunked on us and we had to write a short master's thesis on rust's memory model. You know, as you do.
+그 과정에서 Miri한테 영혼까지 털리고(dunked on us) Rust의 메모리 모델에 대한 짧은 석사 학위 논문을 하나 써내야 했던 그 사소한 해프닝만 빼면 말이죠. 뭐, 다들 그렇게 사는 거 아니겠습니까(as you do).
 
-But on the bright side we *didn't* have to write any jank Rc or RefCell stuff.
+하지만 긍정적으로 본다면, 적어도 코드에 그 불안정하고 지저분한 `Rc`나 `RefCell` 따위의 잡동사니(jank)를 들이붓지 않았다는 점은 다행입니다.
 
 ```rust
 use std::ptr;
@@ -145,35 +143,35 @@ mod test {
     fn basics() {
         let mut list = List::new();
 
-        // Check empty list behaves right
+        // 빈 리스트가 제대로 동작하는지 확인
         assert_eq!(list.pop(), None);
 
-        // Populate list
+        // 리스트에 값 채우기
         list.push(1);
         list.push(2);
         list.push(3);
 
-        // Check normal removal
+        // 정상적인 제거 확인
         assert_eq!(list.pop(), Some(1));
         assert_eq!(list.pop(), Some(2));
 
-        // Push some more just to make sure nothing's corrupted
+        // 내부가 망가지지 않았는지 확인하기 위해 값 더 추가
         list.push(4);
         list.push(5);
 
-        // Check normal removal
+        // 정상적인 제거 확인
         assert_eq!(list.pop(), Some(3));
         assert_eq!(list.pop(), Some(4));
 
-        // Check exhaustion
+        // 모두 고갈되는지 확인
         assert_eq!(list.pop(), Some(5));
         assert_eq!(list.pop(), None);
 
-        // Check the exhaustion case fixed the pointer right
+        // 모두 고갈된 후 포인터가 올바르게 복원됐는지 확인
         list.push(6);
         list.push(7);
 
-        // Check normal removal
+        // 정상적인 제거 확인
         assert_eq!(list.pop(), Some(6));
         assert_eq!(list.pop(), Some(7));
         assert_eq!(list.pop(), None);
@@ -250,7 +248,7 @@ mod test {
         assert!(list.peek() == Some(&5000));
         list.push(7);
 
-        // Drop it on the ground and let the dtor exercise itself
+        // 그냥 바닥에 내팽개쳐서 소멸자(dtor)가 스스로 굴러가는지 구경하기
     }
 }
 ```

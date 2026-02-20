@@ -1,22 +1,21 @@
-# An Ok Singly-Linked Stack
+# 괜찮은 단방향 연결 스택 (An Ok Singly-Linked Stack)
 
-In the previous chapter we wrote up a minimum viable singly-linked
-stack. However there's a few design decisions that make it kind of sucky.
-Let's make it less sucky. In doing so, we will:
+이전 챕터에서 우리는 최소기능제품(MVP)으로서 동작 가능한 단방향 연결 스택을 작성해 보았습니다. 하지만 거기엔 이 녀석을 꽤나 구리게 만드는 몇 가지 잘못된 설계 선택들이 섞여 있었습니다. 
+이번엔 좀 덜 구리게 고쳐봅시다. 그 과정에서, 우리는 다음과 같은 일들을 해낼 것입니다:
 
-* Deinvent the wheel
-* Make our list able to handle any element type
-* Add peeking
-* Make our list iterable
+* 바퀴의 재발명을 멈추기
+* 우리의 리스트가 그 어떤 요소 타입(element type)이든 자유자재로 다룰 수 있게 격상시키기
+* 엿보기(peeking) 기능 추가하기
+* 리스트를 순회 반복(iterable) 가능하게 만들기
 
-And in the process we'll learn about
+그리고 이 과정을 거치며 우리는 다음 내용들을 새롭게 배울 수 있게 됩니다:
 
-* Advanced Option use
-* Generics
-* Lifetimes
-* Iterators
+* 100% 활용하는 Option의 심화된 사용법
+* 제네릭(Generics)
+* 라이프타임(Lifetimes)
+* 반복자(Iterators)
 
-Let's add a new file called `second.rs`:
+우선 `second.rs`라는 이름의 새로운 파일을 하나 추가해 봅시다:
 
 ```rust ,ignore
 // in lib.rs
@@ -25,4 +24,4 @@ pub mod first;
 pub mod second;
 ```
 
-And copy everything from `first.rs` into it.
+그리고 `first.rs` 안에 있던 모든 먼지 쌓인 내용물들을 고스란히 여기에 전부 복사해 옮겨담아 둡시다.

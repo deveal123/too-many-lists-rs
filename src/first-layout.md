@@ -1,37 +1,27 @@
-# Basic Data Layout
+# 기본 데이터 구조 (Basic Data Layout)
 
-Alright, so what's a linked list? Well basically, it's a bunch of pieces of data
-on the heap (hush, kernel people!) that point to each other in sequence. Linked
-lists are something procedural programmers shouldn't touch with a 10-foot pole,
-and what functional programmers use for everything. It seems fair, then, that we
-should ask functional programmers for the definition of a linked list. They will
-probably give you something like the following definition:
+좋습니다, 그럼 연결 리스트란 과연 무엇일까요? 기본적으로 연결 리스트는 연속적으로 서로를 가리키고 있는 힙(Heap) 포인터의 데이터 조각 뭉치들입니다(잠깐, 커널을 개발하는 분들은 쉿 조용히 하세요!). 
+절차적 객체 지향 프로그래머들은 열 발자국 밖에서도 이 연결 리스트를 피해야 하지만, 반대로 함수형 프로그래머들은 연결 리스트를 모든 곳에 즐겨 사용합니다. 그렇다면 연결 리스트의 정의가 대체 무엇인지 함수형 프로그래머에게 묻는 것이 나름 나쁘지 않아 보입니다. 그들은 아마 다음과 같은 정의를 줄 것입니다:
 
 ```haskell
 List a = Empty | Elem a (List a)
 ```
 
-Which reads approximately as "A List is either Empty or an Element followed by a
-List". This is a recursive definition expressed as a *sum type*, which is a
-fancy name for "a type that can have different values which may be different
-types". Rust calls sum types `enum`s! If you're coming from a C-like language,
-this is exactly the enum you know and love, but in overdrive. So let's
-transcribe this functional definition into Rust!
+이걸 대략 읽어보자면 "하나의 List는 비어있거나(Empty) 아니면 어떤 요소(Element) 뒤에 또 다른 List가 따라오는 형태이다" 라고 할 수 있습니다. 이는 수학에서 말하는 합 타입(*sum type*)으로 표현된 재귀적 정의인데, 합 타입이란 조금 폼 잡고 말하자면 "다양한 타입 등의 각기 다른 여러 값들을 가질 수 있는 타입"이라는 뜻입니다. Rust에서는 이 합 타입을 열거형(`enum`)이라고 부릅니다! 만약 여러분이 C와 비슷한 언어 출신이라면 이미 잘 알고 익숙하게 쓰던 바로 그 enum이 맞습니다. 단지 엄청나게 오버드라이브 된 강력한 형태일 뿐이죠. 그러니 이제 이 함수형 정의를 Rust로 옮겨 적어 봅시다!
 
-For now we'll avoid generics to keep things simple. We'll only support
-storing signed 32-bit integers:
+일단 당분간은 상황을 단순하게 유지하기 위해 제네릭(generics) 사용을 피하겠습니다. 우리는 오직 부호가 있는 32비트 정수형(`i32`) 데이터만 저장해 볼 것입니다:
 
 ```rust ,ignore
-// in first.rs
+// src/first.rs
 
-// pub says we want people outside this module to be able to use List
+// pub은 이 모듈 밖의 사람들도 List를 사용할 수 있기를 원한다는 의미입니다.
 pub enum List {
     Empty,
     Elem(i32, List),
 }
 ```
 
-*phew*, I'm swamped. Let's just go ahead and compile that:
+*휴*, 머리가 복잡하네요. 일단 지금 상태에서 과연 컴파일이 되는지 한 번 실행해 봅시다:
 
 ```text
 > cargo build
@@ -48,37 +38,35 @@ error[E0072]: recursive type `first::List` has infinite size
   = help: insert indirection (e.g., a `Box`, `Rc`, or `&`) at some point to make `first::List` representable
 ```
 
-Well. I don't know about you, but I certainly feel betrayed by the functional
-programming community.
+이런. 여러분 생각은 어떨지 모르겠지만 저는 전 세계 함수형 선구자들에게 완벽하게 배신당한 기분입니다.
 
-If we actually check out the error message (after we get over the whole
-betrayal thing), we can see that rustc is actually telling us exactly
-how to solve this problem:
+일단 분노를 조금 가라앉히고 저 에러 메시지를 침착하게 살펴보면, 이 문제를 어떻게 해결해야 하는지 rustc가 심지어 정확하게 가이드해 주고 있다는 사실을 깨달을 수 있습니다:
 
 > insert indirection (e.g., a `Box`, `Rc`, or `&`) at some point to make `first::List` representable
+> (`first::List`의 크기를 한정하기 위해 `Box`, `Rc`, 또는 `&`와 같은 간접 참조(Indirection)를 특정 지점에 삽입하세요)
 
-Alright, `box`. What's that? Let's google `rust box`...
+음, `Box` 알겠습니다. 근데 그게 뭐죠? 구글에 `rust box`라고 검색해봅시다...
 
 > [std::boxed::Box - Rust](https://doc.rust-lang.org/std/boxed/struct.Box.html)
 
-Lesse here...
+어디 한 번 읽어볼까요...
 
 > `pub struct Box<T>(_);`
->
-> A pointer type for heap allocation.
-> See the [module-level documentation](https://doc.rust-lang.org/std/boxed/) for more.
+> 
+> 힙 할당을 위한 하나의 포인터 타입.
+> 자세한 내용은 [모듈 수준 문서](https://doc.rust-lang.org/std/boxed/)를 참조하세요.
 
-*clicks link*
+*(링크 딸깍)*
 
-> `Box<T>`, casually referred to as a 'box', provides the simplest form of heap allocation in Rust. Boxes provide ownership for this allocation, and drop their contents when they go out of scope.
+> 일반적으로 'box'라고 불리는 `Box<T>`는 Rust에서 제공하는 가장 간단한 형태의 힙 할당 방식을 일컫습니다. Box는 이 할당된 메모리에 대한 소유권(ownership)을 제공하며, 스코프(scope)를 벗어날 때 내부에 보관된 요소를 메모리에서 해제(drop)합니다.
 >
-> Examples
+> Examples (예시)
 >
-> Creating a box:
->
+> box 초기화하기:
+> 
 > `let x = Box::new(5);`
 >
-> Creating a recursive data structure:
+> 재귀적 데이터 구조 생성하기:
 >
 ```rust
 #[derive(Debug)]
@@ -95,19 +83,19 @@ fn main() {
 }
 ```
 >
-> This will print `Cons(1, Box(Cons(2, Box(Nil))))`.
->
-> Recursive structures must be boxed, because if the definition of Cons looked like this:
->
+> 이 코드는 `Cons(1, Box(Cons(2, Box(Nil))))`를 출력합니다.
+> 
+> 재귀적 구조(Recursive structures)는 반드시 box로 감싸져 있어야만 합니다. 왜냐하면 만약 Cons의 정의가 다음과 같았다면:
+> 
 > `Cons(T, List<T>),`
 >
-> It wouldn't work. This is because the size of a List depends on how many elements are in the list, and so we don't know how much memory to allocate for a Cons. By introducing a Box, which has a defined size, we know how big Cons needs to be.
+> 동작하지 않았을 것이기 때문입니다. 이는 하나의 List 속 크기는 리스트 안에 얼마나 많은 요소가 있는가에 따라 매번 달라지는데, 이 때문에 컴파일러 입장에서는 도대체 얼마만큼의 메모리를 Cons를 위해 할당해야 할지 미리 알 수 없기 때문입니다. 하지만 만약 고정된 포인터 크기를 가지도록 Box를 도입하여 사용한다면, 우리는 Cons가 도대체 어느 정도의 크기를 가져야 하는지 파악할 수 있게 됩니다.
 
-Wow, uh. That is perhaps the most relevant and helpful documentation I have ever seen. Literally the first thing in the documentation is *exactly what we're trying to write, why it didn't work, and how to fix it*.
+와우. 어.. 살면서 지금까지 본 공식 문서 중에 목적과 가장 정확히 부합하는 가장 놀라운 도움글일지도 모르겠습니다. 말 그대로 공식 문서의 가장 첫 페이지에서 우리가 곧장 작성하려는 것이 *정확히 무엇인지, 이전에 왜 안되었는지, 그리고 어떻게 고칠 수 있는지*를 속 시원히 알려주고 있습니다.
 
-Dang, docs rule.
+야, 공식문서 정말 끝내주는군요.
 
-Ok, let's do that:
+좋아요, 그럼 그대로 코드를 고쳐봅시다:
 
 ```rust ,ignore
 pub enum List {
@@ -122,11 +110,11 @@ pub enum List {
    Finished dev [unoptimized + debuginfo] target(s) in 0.22s
 ```
 
-Hey it built!
+이예, 정상적으로 빌드되었습니다!
 
-...but this is actually a really foolish definition of a List, for a few reasons.
+...하지만 이 List 선언은 사실 꽤 바보 같은 구조입니다. 몇 가지 이유가 있죠.
 
-Consider a list with two elements:
+요소가 2개 들어있는 리스트의 상태를 생각해보겠습니다:
 
 ```text
 [] = Stack
@@ -135,25 +123,21 @@ Consider a list with two elements:
 [Elem A, ptr] -> (Elem B, ptr) -> (Empty, *junk*)
 ```
 
-There are two key issues:
+여기엔 크게 두 가지 이슈가 있습니다:
 
-* We're allocating a node that just says "I'm not actually a Node"
-* One of our nodes isn't heap-allocated at all.
+* "난 사실 진짜 노드(Node)가 아니야"라고 말하는 노드를 억지로 할당하고 있습니다.
+* 우리의 노드 중 하나는 애초에 힙 공간을 할당조차 받지 못합니다.
 
-On the surface, these two seem to cancel each-other out. We heap-allocate an
-extra node, but one of our nodes doesn't need to be heap-allocated at all.
-However, consider the following potential layout for our list:
+얼핏 보기에 이 둘의 단점이 서로 만나 절묘하게 상쇄되는 것처럼 보일 수 있습니다. 여분의 아무 짝에 쓸모없는 노드 하나를 기어이 힙에 욱여넣어 두었지만, 어쨌든 첫 번째 노드 하나는 힙 공간 할당조차 필요 없이 처리하니까 말이죠!
+하지만 이를 만약 다음 구조로 대체한다고 한 번 생각해보겠습니다:
 
 ```text
 [ptr] -> (Elem A, ptr) -> (Elem B, *null*)
 ```
 
-In this layout we now unconditionally heap allocate our nodes. The
-key difference is the absence of the *junk* from our first layout. What is
-this junk? To understand that, we'll need to look at how an enum is laid out
-in memory.
+이 레이아웃에선 무조건 모든 노드 공간을 힙에 할당합니다. 가장 큰 차이점은 첫 번째 레이아웃과 달리 불필요한 쓰레기 데이터(*junk*)가 전혀 남지 않는다는 겁니다. 대체 저 쓰레기(junk)의 정체가 뭐길래요? 이를 이해하려면 열거형(enum) 내부 원리가 메모리 공간 속에 어떻게 얹혀있는지 살펴볼 필요가 있습니다.
 
-In general, if we have an enum like:
+일반적으로, 만약 enum을 다음과 같이 선언했다면:
 
 ```rust ,ignore
 enum Foo {
@@ -164,57 +148,42 @@ enum Foo {
 }
 ```
 
-A Foo will need to store some integer to indicate which *variant* of the enum it
-represents (`D1`, `D2`, .. `Dn`). This is the *tag* of the enum. It will also
-need enough space to store the *largest* of `T1`, `T2`, .. `Tn` (plus some extra
-space to satisfy alignment requirements).
+Foo는 이것이 어떤 *변형(variant)*에 속하는지(`D1`, `D2`, .. `Dn`)를 나타내기 위해 최소한 일정량의 정수형 태그(tag) 메모리 공간을 보관해야 합니다. 또한 구조체 내 전체 열거형들 중 가장 큰 크기를 가진 타입(largest of `T1`, `T2`, .. `Tn`)을 저장하기에 충분한 크기의 공간도 확보해야 합니다 (물론 정렬(Alignment) 요구사항을 만족하기 위한 약간의 빈 패딩 공간도 추가로 포함해야 합니다).
 
-The big takeaway here is that even though `Empty` is a single bit of
-information, it necessarily consumes enough space for a pointer and an element,
-because it has to be ready to become an `Elem` at any time. Therefore the first
-layout heap allocates an extra element that's just full of junk, consuming a
-bit more space than the second layout.
+여기서 제일 중요한 점은 이겁니다. `Empty`라는 녀석은 고작 단 한 개의 비트 정보 수준에 불과하지만, 그럼에도 여전히 늘 포인터 공간과 엘리먼트 정보 등을 담아두기에 넉넉할 만큼의 무거운 크기를 똑같이 점유하게 됩니다. 그건 바로 `Empty`가 어느 순간 갑자기 `Elem`으로 변모해야 할지도 모르니까 이를 사전에 대비하여 언제나 만반의 준비를 갖추고 있어야 해서 그렇습니다. 결국 첫 번째 레이아웃 디자인은 두 번째 레이아웃보다도 공간을 훨씬 더 많이 낭비하는 셈이 되고 맙니다. 그냥 텅 빈 쓰레기 허수아비 같은 노드 공간을 통째로 힙에 박아 둔 것이나 다름없기 때문입니다.
 
-One of our nodes not being allocated at all is also, perhaps surprisingly,
-*worse* than always allocating it. This is because it gives us a *non-uniform*
-node layout. This doesn't have much of an appreciable effect on pushing and
-popping nodes, but it does have an effect on splitting and merging lists.
+우리가 만든 노드 중 하나가 전혀 할당되지 않고 스택에 박혀있는 것 역시 꽤 놀랄 만하게 할당한 것보다도 훨씬 상황이 *더 나쁩니다*. 이는 우리에게 노드의 공간 배치(layout)가 일정하지 않게 되는 *불규칙성(non-uniform)*을 부각시킵니다. 단순히 Push나 Pop 같은 행위를 할 때에 이것이 미치는 영향력은 체감하기 힘들지 모르지만 두 개의 독립된 연결 리스트를 병합하거나 쪼개야 하는 순간 이것이 불러올 재앙은 가히 혀를 내두를 수준입니다.
 
-Consider splitting a list in both layouts:
+두 가지 방식의 리스트 레이아웃을 쪼개는 과정을 한 번 살펴볼까요:
 
 ```text
-layout 1:
+레이아웃 1:
 
 [Elem A, ptr] -> (Elem B, ptr) -> (Elem C, ptr) -> (Empty *junk*)
 
-split off C:
+C 노드 분리하기:
 
 [Elem A, ptr] -> (Elem B, ptr) -> (Empty *junk*)
 [Elem C, ptr] -> (Empty *junk*)
 ```
 
 ```text
-layout 2:
+레이아웃 2:
 
 [ptr] -> (Elem A, ptr) -> (Elem B, ptr) -> (Elem C, *null*)
 
-split off C:
+C 노드 분리하기:
 
 [ptr] -> (Elem A, ptr) -> (Elem B, *null*)
 [ptr] -> (Elem C, *null*)
 ```
 
-Layout 2's split involves just copying B's pointer to the stack and nulling
-the old value out. Layout 1 ultimately does the same thing, but also has to
-copy C from the heap to the stack. Merging is the same process in reverse.
+레이아웃 2의 분할 작업은 단순히 B의 포인터 값을 스택으로 복사한 뒤, 예전 값 자리에 널 포인터를 채워 넣기만 하면 간단히 끝납니다. 반면 레이아웃 1도 궁극적으로는 똑같은 동작을 수행하겠지만 여기엔 추가적인 족쇄가 같이 달립니다. 바로 분할할 대상인 C를 무거운 힙 공간에서부터 스택으로 통째로 복사해 와야 한다는 과정이 뒤섞이기 때문입니다. 병합(merge)을 해도 과정만 뒤바뀔 뿐 속도는 똑같이 거북이 걸음입니다.
 
-One of the few nice things about a linked list is that you can construct the
-element in the node itself, and then freely shuffle it around lists without
-ever moving it. You just fiddle with pointers and stuff gets "moved". Layout 1
-trashes this property.
+연결 리스트 자료구조가 그나마 가진 한 줌의 메리트 중 하나가 바로 "그것이 지닌 노드 데이터 값을 그대로 둔 채 그냥 포인터의 위치들만을 바꿔가면서 아주 손쉽고 자유자재로 연결 리스트 자료의 위치나 방향을 다유자재로 다듬을 수 있다는 것"입니다. 데이터들이 아무것도 수정되거가 실제로 움직이지 않는데도 마치 데이터가 움직이는 것처럼 "이동(moved)"합니다. 하지만 레이아웃 1 디자인은 이런 연결 리스트의 최고의 우월함을 완전히 쓰레기통에 처박아버렸습니다.
 
-Alright, I'm reasonably convinced Layout 1 is bad. How do we rewrite our List?
-Well, we could do something like:
+좋습니다. 이제 레이아웃 1이 나쁘다는 사실은 합리적으로 납득이 되었습니다. 그러면 List 녀석을 어떻게 다시 고쳐서 작성해 볼 수 있을까요? 
+글쎄요, 이런 방법은 어떨까요:
 
 ```rust ,ignore
 pub enum List {
@@ -224,18 +193,11 @@ pub enum List {
 }
 ```
 
-Hopefully this seems like an even worse idea to you. Most notably, this really
-complicates our logic, because there is now a completely invalid state:
-`ElemThenNotEmpty(0, Box(Empty))`. It also *still* suffers from non-uniformly
-allocating our elements.
+이 코드를 볼 때 당신의 눈동자에도 최악의 쓰레기 같은 코드라는 자각이 들었기를 희망합니다. 무엇보다도 이것이 우리의 전체 코드 로직을 심하게 복잡하게 만들어버리는데, 왜냐하면 논리적으로 절대로 성립할 수 없는 유효하지 않은 버그 상태(`ElemThenNotEmpty(0, Box(Empty))`)가 탄생하기 때문입니다. 게다가 불규칙적인 노드 공간 배치 구조라는 굴레의 오를 아직까지 *처단하지조차 못했습니다!*
 
-However it does have *one* interesting property: it totally avoids allocating
-the Empty case, reducing the total number of heap allocations by 1. Unfortunately,
-in doing so it manages to waste *even more space*! This is because the previous
-layout took advantage of the *null pointer optimization*.
+하지만 이 코드는 *단 하나* 흥미로운 속성을 가지고 있습니다. 바로 저 거대하던 이전의 쓰레기 빈 공간(`Empty`)에 관해 철저히 힙 메모리를 할당하지 않아 전체 힙 할당 빈도를 1만큼 영구적으로 줄일 수 있다는 점입니다. 하지만 안타깝게도 이 짓거리를 하는 대가로 이전보다 배는 *더 많은 공간을 낭비해 버렸다*는 사실을 망각해선 안 됩니다! 왜냐하면 이전 레이아웃은 *널 포인터 최적화(null pointer optimization)*라는 것을 활용하고 있었기 때문입니다.
 
-We previously saw that every enum has to store a *tag* to specify which variant
-of the enum its bits represent. However, if we have a special kind of enum:
+우리는 이전에 모든 열거형(enum) 타입은 이것들이 지닌 비트들이 여러 열거형 후보군 중 과연 누구에 속하는지 식별하기 위해 반드시 별도의 *태그(tag)*용 메모리 사이즈를 별도로 보관해야만 한다는 사실을 확인한 바가 있습니다. 자 그런데, 만약 우리가 아주 특별한 종류의 열거형 변수를 선언한다고 한 번 상상해 봅시다. 가령,
 
 ```rust,ignore
 enum Foo {
@@ -244,31 +206,17 @@ enum Foo {
 }
 ```
 
-the null pointer optimization kicks in, which *eliminates the space needed for
-the tag*. If the variant is A, the whole enum is set to all `0`'s. Otherwise,
-the variant is B. This works because B can never be all `0`'s, since it contains
-a non-zero pointer. Slick!
+라는 형태가 있을 때, 마침내 널 포인터 최적화(null pointer optimization)가 엔진에 불을 뿜으며 *태그를 위한 식별 공간을 메모리에서 한방에 날려버립니다*. 만약 현재 변수타입이 A 였다면 전체 Enum 메모리 공간의 내부 값은 전부 `0`으로 가득 찰 테지만, B의 경우 B 안에는 `0`이 아닌 특수한 널이 아닌 포인터(non-null pointer)가 내부를 떡하니 장악하고 있기 때문에 결코 모든 공간이 전부 `0`이 될 수는 없습니다. 아주 멋진 최적화 방식입니다!
 
-Can you think of other enums and types that could do this kind of optimization?
-There's actually a lot! This is why Rust leaves enum layout totally unspecified.
-There are a few more complicated enum layout optimizations that Rust will do for
-us, but the null pointer one is definitely the most important!
-It means `&`, `&mut`, `Box`, `Rc`, `Arc`, `Vec`, and
-several other important types in Rust have no overhead when put in an `Option`!
-(We'll get to most of these in due time.)
+혹시 이런 놀라운 방식의 메모리 절약 최적화를 자체적으로 수행할 수 있는 또 다른 열거형이나 타입이 떠오르십니까? 사실 세상엔 이런 녀석들이 무지무지 많습니다! Rust가 굳이 열거형 타입들의 메모리 레이아웃 구조를 별도로 지정하지 않고 애매하게 스펙 여백으로 남겨둔 이유가 바로 이것입니다. Rust 엔진이 메모리 절약을 위해 우리 몰래 등 뒤에서 재주 좋게 수행하는 훨씬 더 다양하고 정교한 열거형 공간 최적화 전략들이 널찍하지만 어쨌든 여기서 제일 대장격인 중요한 놈을 고르라면 단연코 널 포인터 최적화 전략이라 부를 수 있을 것입니다! 
 
-So how do we avoid the extra junk, uniformly allocate, *and* get that sweet
-null-pointer optimization? We need to better separate out the idea of having an
-element from allocating another list. To do this, we have to think a little more
-C-like: structs!
+오직 이 덕택에, `&`, `&mut`, `Box`, `Rc`, `Arc`, `Vec` 등 수많은 중요 타입들이 `Option` 따위로 둘러싸일 때도 아무런 메모리 오버헤드를 겪지 않고 곧장 원래 값과 동일한 포인터 무게를 가지며 속도를 낼 수가 있습니다! (여기에 나열한 녀석들의 과반수 이상은 앞으로 때가 되면 직접 하나둘씩 만나게 될 겁니다.)
 
-While enums let us declare a type that can contain *one* of several values,
-structs let us declare a type that contains *many* values at once. Let's break
-our List into two types: A List, and a Node.
+자, 그러면 어떻게 추가적인 쓰레기 공간 낭비를 줄이고 균일한(uniform) 할당 패턴을 갖추면서도 *동시에* 이 달콤한 널 포인터 최적화 기술까지 싹 건져먹을 수 있을까요? 우리는 단순히 리스트 자체와, "값을 가지고 뒤를 가리킨다"는 개념을 서로 완전히 분리시키면 됩니다. 이를 위해선 우리는 C언어 특유의 방식으로 조금 더 사고해 봐야만 합니다: 바로 구조체(structs) 말입니다!
 
-As before, a List is either Empty or has an element followed by another List.
-By representing the "has an element followed by another List" case by an
-entirely separate type, we can hoist the Box to be in a more optimal position:
+열거형(enum)은 여러 후보군 속에서 *단 하나* 의 값을 선택해야 할 때 쓰이는 타입 선언 문법이었다면, 구조체(structs)는 우리가 한 번에 *여러* 개의 값들을 보유해야 할 때 사용하는 친구입니다. 이제 우리의 List를 두 가지 뚜렷한 주체로 이분할해봅시다: 오직 앞 대가리만을 감당하는 'List'와 내부 엘리먼트 요소들을 감당하는 'Node'.
+
+이전과 마찬가지로, 하나의 리스트는 비어있거나(`Empty`) 아니면 또 다른 리스트로 이어지는 한 요소를 가지고 있습니다. 그런데 이번엔 "요소를 가지고 있으면서 다른 리스트를 가리키는" 이 뒷부분의 상태를 *완전히 별개의 타입*으로 분리해서 독립 모듈로 만들어버림으로써 좀 더 아주 최적화된 좋은 자란 박스로(`Box`) 고양시킬 수가 있습니다!
 
 ```rust ,ignore
 struct Node {
@@ -282,15 +230,13 @@ pub enum List {
 }
 ```
 
-Let's check our priorities:
+자 한 번 목표했던 게 잘 이뤄졌나 점검해 볼까요?
 
-* Tail of a list never allocates extra junk: check!
-* `enum` is in delicious null-pointer-optimized form: check!
-* All elements are uniformly allocated: check!
+* 리스트 끝부분 꼬리에서 불필요한 쓰레기 공간(`junk`)을 억지로 할당하는가?: 점검 완료! (안 함)
+* 열거형(`enum`)이 달콤한 널 포인터 최적화 체형을 잘 만족하고 있는가?: 점검 완료!
+* 모든 리스트 구성 요소 데이터들이 다 각자 힙 속에 공평하고 균일하게 분배되어 들어갔는가?: 점검 완료!
 
-Alright! We actually just constructed exactly the layout that we used to
-demonstrate that our first layout (as suggested by the official Rust
-documentation) was problematic.
+좋습니다! 사실 지금 완성한 저 디자인 레이아웃이 정확히 위 단락에서 "Rust 공식 도큐먼트에서 제안해 주었던 최초의 디자인 구조 레이아웃의 결함을 입증"하기 위해 우리가 잠깐 도입해 봤던, 균형잡히고 최적화된 그 레이아웃 2와 정확하게 구조적으로 동일합니다.
 
 ```text
 > cargo build
@@ -308,12 +254,7 @@ warning: private type `first::Node` in public interface (error E0446)
 
 :(
 
-Rust is mad at us again. We marked the `List` as public (because we want people
-to be able to use it), but not the `Node`. The problem is that the internals of
-an `enum` are totally public, and we're not allowed to publicly talk about
-private types. We could make all of `Node` totally public, but generally in Rust
-we favour keeping implementation details private. Let's make `List` a struct, so
-that we can hide the implementation details:
+Rust가 또 우리에게 신경질을 부리네요. 우리는 `List`가 누구나 활용 가능하도록 public 제어자로 명시해 두었지만(당연히 사람들이 이걸 사용해야 하니까요), 정작 내부에 감싸져있는 `Node`에는 엑세스를 허가해 주지 않았습니다. 여기서 생기는 근본적인 오류는, `enum`의 내부가 모조리 공용(public)으로 공개되어 있는 상태인데도 이 내부 멤버 인자가 갑자기 남에게 숨겨진 사설 타입(private type)을 공공연하게 언급하고 있다는 모순된 상황입니다. 그냥 쿨하게 `Node` 전체를 통틀어서 누구나 사용 가능하게 공용인 public으로 만들어버릴 수도 있겠지만, 일반적으로 Rust 세계에서는 내부 구현부의 디테일을 외부에 숨기는 프라이빗화 정책을 매우 강력하게 선호합니다. 차라리 `List`를 그냥 뚝 까놓고 구조체(Structs)로 변환해 버려서 그 뒤에 모든 수치스러운 부분들을 프라이빗하게 은폐시켜 감춰버립시다.
 
 ```rust ,ignore
 pub struct List {
@@ -331,8 +272,7 @@ struct Node {
 }
 ```
 
-Because `List` is a struct with a single field, its size is the same as that
-field. Yay zero-cost abstractions!
+`List`는 이제 오직 고작 필드가 단 하나뿐인 구조체가 되다보니, 구조체 자체의 크기는 이 필드의 고유 사이즈와 완벽하게 100% 일치합니다. 와, 진짜 이 빌어먹을 오버헤드 0비트의 제로-코스트 추상화 프로그래밍 같으니라고! 만세!
 
 ```text
 > cargo build
@@ -371,8 +311,4 @@ warning: field is never used: `next`
 
 ```
 
-Alright, that compiled! Rust is pretty mad, because as far as it can tell,
-everything we've written is totally useless: we never use `head`, and no one who
-uses our library can either since it's private. Transitively, that means Link
-and Node are useless too. So let's solve that! Let's implement some code for our
-List!
+좋아요, 마침내 컴파일이 되었습니다! Rust가 엄청 뿔이 났습니다. 왜냐하면 컴파일러가 판단하기에는 우리가 지금까지 짠 게 어디에도 써먹을 수조차 없는 쓰레기 코드였기 때문이죠. 우리는 `head`를 한 번도 사용하지 않았고 이 라이브러리를 쓰는 타인조차 어쨌든 이것이 private 구조체라 사용할 방도가 없습니다. 즉 이건 연쇄적으로 타고 내려가 보면 우리가 만들어둔 저 대단한 Link와 Node 타입 역시 애초부터 아예 무쓸모라는 결론으로 귀착됩니다. 그러니까 이제 얼른 이 쓰레기들을 고쳐버리죠! 이제 본격적으로 우리의 List가 숨 쉴 수 있는 진짜 코드를 몇 줄 넣어보도록 합시다!

@@ -1,50 +1,26 @@
-# Unsafe Rust
+# 안전하지 않은 Rust (Unsafe Rust)
 
-This is a serious, big, complicated, and dangerous topic.
-It's so serious that I wrote [an entire other book][nom] on it.
+이건 아주 진지하고 방대하며, 복잡하고, 또 위험한(dangerous) 주제입니다.
+너무 진지한 나머지 제가 아예 이 주제만을 다루는 [또 다른 책 한 권 전체][nom]를 통째로 썼을 정도니까요.
 
-The long and the short of it is that *every* language is actually unsafe as soon
-as you allow calling into other languages, because you can just have C do
-arbitrarily bad things. Yes: Java, Python, Ruby, Haskell... everyone is wildly
-unsafe in the face of Foreign Function Interfaces (FFI).
+긴말할 것 없이 요약(The long and the short of it)하자면, 다른 언어를 호출(calling into)하는 짓거리를 허용하는 그 순간부터 사실상 *모든* 언어는 안전하지 않습니다. 왜냐하면 C 언어보고 마음껏 깽판을 치라고(arbitrarily bad things) 허락해버린 셈이니까요. 네 맞습니다: Java, Python, Ruby, Haskell... 그 어떤 언어라도 FFI (Foreign Function Interfaces)와 직면하는 순간 끔찍하게 안전하지 않아(wildly unsafe)집니다.
 
-Rust embraces this truth by splitting itself into two languages: Safe Rust, and
-Unsafe Rust. So far we've only worked with Safe Rust. It's completely 100%
-safe... except that it can FFI into Unsafe Rust.
+Rust는 스스로를 안전한(Safe) Rust와 안전하지 않은(Unsafe) Rust라는 두 가지 언어 층계로 쪼개(splitting)버림으로써 이 잔혹한 현실 모순을 수용(embraces)했습니다. 지금까지 우리는 오직 안전한 Rust에서만 놀았습니다. 네, 이 구역은 완벽하게 100% 안전합니다... 이 녀석이 Unsafe Rust 세계로 FFI 호출을 때리지 않는 한(except that) 말이죠.
 
-Unsafe Rust is a *superset* of Safe Rust. It's completely the same as Safe Rust in all its
-semantics and rules, you're just allowed to do a few *extra* things that are
-wildly unsafe and can cause the dreaded Undefined Behaviour that haunts C.
+Unsafe Rust는 Safe Rust의 *상위 집합(superset)* 입니다. 즉, 이 녀석은 근본적인 의미론(semantics)과 규칙 면에서 Safe Rust와 100% 똑같이 동작하며, 여길 넘어오면 단지 C 언어를 따라다니는 그 악명 높은 미정의 동작(Undefined Behaviour) 귀신 파국을 초래할 수도 있는 끔찍하게 위험한(wildly unsafe) *추가적인(extra)* 몇 가지 금단 마술 행동들을 추가로 허락받을 수 있을 뿐입니다.
 
-Again, this is a really huge topic that has a lot of interesting corner cases.
-I *really* don't want to go really deep into it (well, I do. I did. [Read that
-book][nom]). That's ok, because with linked lists we can actually ignore almost
-all of it.
+다시금 명심해 두지만, 이 주제는 흥미로운 엣지 케이스들을 산더미처럼 품고 있는 진짜 거대하고 심오한(really huge) 영역입니다. 전 여기서 그 늪을 *진짜로* 깊게 파고들고 싶진 않습니다 (뭐, 솔직히 파고들고 싶긴 합니다. 진짜 팠었고요. [저 책을 읽으십쇼][nom]). 근데 뭐 다행입니다. 연결 리스트 나부랭이를 짤 때는 사실 저 험난한 심연의 규칙 대부분을 걍 가볍게 개무시(ignore almost all of it)하고 제껴도 되거든요.
 
-> **NARRATOR:** This was a lie, but it did seem true in 2015.
+> **해설자:** 훗날 이건 순거짓말(lie)로 밝혀졌네만, 적어도 2015년 언저리엔 진짜 사실처럼 보이긴 했었지.
 
-The main Unsafe tool we'll be using are *raw pointers*. Raw pointers are
-basically C's pointers. They have no inherent aliasing rules. They have no
-lifetimes. They can be null. They can be misaligned. They can be dangling. They can point to
-uninitialized memory. They can be cast to and from integers. They can be cast
-to point to a different type. Mutability? Cast it. Pretty much everything goes,
-and that means pretty much anything can go wrong.
+우리가 애용하게 될 메인 Unsafe 도구는 바로 *원시 포인터(raw pointers)* 입니다. 원시 포인터란 건 기본적으로 C언어의 포인터 그 자체입니다. 여긴 고유한 앨리어싱(aliasing) 통제 규칙 따윈 전혀 없으며(no inherent), 수명(lifetimes)이란 통제조차 안 먹힙니다. 이놈들은 마음대로 null이 될 수도, 메모리 정렬이 어긋날(misaligned) 수도, 얽혀 썩은 허공의 댕글링(dangling) 상태가 될 수도, 심지어 초기화조차 안 된 미지의 메모리 구역을 가리킬(uninitialized memory) 수도 있습니다. 그 포인터 껍질을 정수(integers) 뭉치로 마구 캐스팅(cast)해 찍어 내리거나 뒤집을 수도 있고, 반대로 다른 임의의 타입으로 캐스팅 위장 포장해 가리킬 수도 있죠. 가변성(Mutability)? 걍 캐스팅으로 찍어 누르십쇼. 한마디로 뭔 미친 짓이든 거의 다 허용되며(Pretty much everything goes), 그 뜻은 곧 무슨 온갖 최악의 병크 사태든 대략 다 터질 수 있다는(anything can go wrong) 뜻입니다.
 
-> **NARRATOR:** no inherent aliasing rules, eh? Ah, the innocence of youth.
+> **해설자:** 고유 앨리어싱 규칙 따윈 전혀 없다고라?(no inherent aliasing rules, eh?) 하아, 젊은 날의 무지한 순수함(innocence)이여.
 
-This is some bad stuff and honestly you'll live a happier life never having
-to touch these. Unfortunately, we want to write linked lists, and linked lists
-are awful. That means we're going to have to use unsafe pointers.
+이건 굉장히 위험하고 지저분한 세계이니, 진심으로 충고하건대 평생 이놈들 근처에 얼쩡거릴(touch) 일 하나 없이 살아가는 편이 당신 인생 통틀어 훨씬 더 행복할 겁니다(happier life). 근데 불행히도 우린 연결 리스트를 직조하고 싶어 안달 났고, 연결 리스트라는 구조는 존나 최악(awful)입니다. 그러니 무조건 안전하지 않은 포인터를 주무르고 쓸 수밖에 없다는 소리죠.
 
-There are two kinds of raw pointer: `*const T` and `*mut T`. These are meant to
-be `const T*` and `T*` from C, but we really don't care about what C thinks they
-mean that much. You can only dereference a `*const T` to an `&T`, but much like
-the mutability of a variable, this is just a lint against incorrect usage. At
-most it just means you have to cast the `*const` to a `*mut` first. Although if
-you don't actually have permission to mutate the referent of the pointer,
-you're gonna have a bad time.
+원시 포인터에는 `*const T` 와 `*mut T`, 두 가지 종류가 존재합니다. 이들은 명목상 C에서의 `const T*` 와 `T*` 에 대응하도록 설계된 것들이지만(meant to be), 사실 C언어가 이들을 어떻게 생각하고 다루는지 따위엔 별반 큰 관심(don't care about)이 없습니다. 당신은 `*const T`를 역참조해서 오직 읽기 전용 참조자인 `&T` 만 뽑아낼 수 있습니다만, 변수의 가변성이 그러하듯 이건 사실상 규격 외의 잘못된 용법에 대한 린트(lint) 경고 수준의 안전핀일 뿐입니다. 기껏해야 그깟 `*const`를 먼저 `*mut`로 슬그머니 캐스팅(cast) 세탁한 뒤 써야 한다는 번거로움 정도를 의미할 뿐이죠. 다만 만에 하나, 해당 포인터가 가리키는 원본 실체 알맹이(referent)를 뜯어고칠 정당한 가변성 권한(permission)이 진짜로 애초에 없었던 경우라면, 아주 개된통 나락으로 굴러떨어지게(bad time) 될 겁니다.
 
-Anyway, we'll get a better feel for this as we write some code. For now,
-`*mut T == &unchecked mut T`!
+어쨌든, 코드를 좀 짜고 굴리다 보면(write some code) 이 불쾌한 시스템 구조에 대한 감을 더 확실히 잡게 될 겁니다. 일단 지금은 당장 `*mut T == &unchecked mut T` (검열 면제 프리패스 가변 참조자) 정도로 대충 퉁치고 기저 이해해 두도록 하죠!
 
 [nom]: https://doc.rust-lang.org/nightly/nomicon/

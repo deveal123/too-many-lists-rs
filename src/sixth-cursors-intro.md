@@ -1,23 +1,23 @@
-# An Introduction To Cursors
+# 커서(Cursors) 소개 (An Introduction To Cursors)
 
-OK!!! We now have a LinkedList that's on par with std's 1.0 implementation! Which of course means that our LinkedList is *still completely useless*. We've taken the enormous performance penalty of implementing a Deque as a linked list, **and we don't have any of the APIs that make it actually useful**. 
+좋습니다!!! 마침내 우리의 LinkedList가 std의 1.0 시절 구현체와 동급의 위치에 올라섰습니다! 이게 무슨 뜻이냐고요? 당연히 우리의 LinkedList는 *여전히 완전 쓸모없는 쓰레기*라는 뜻이죠. 우리는 덱(Deque)을 연결 리스트로 구현한답시고 성능을 안드로메다로 개박살 내는 엄청난 페널티(penalty)를 감수했음에도 불구하고, **정작 이걸 진짜로 유용하게 써먹을 수 있는 API는 단 하나도 갖고 있지 않습니다**.
 
-Here's how we do against the "killer apps" of linked lists:
+연결 리스트만이 뽐낼 수 있는 진정한 "킬러 기능(killer apps)"들 앞에서 우리 꼬라지가 어떤지 한 번 객관적으로 성적표를 매겨봅시다:
 
-* 🚫 Getting to do [weird intrusive stuff](https://docs.rs/linked-hash-map/latest/linked_hash_map/)
-* 🚫 Getting to do [weird lockfree stuff](https://doc.rust-lang.org/std/sync/mpsc/)
-* 🚫 Getting to store [Dynamically Sized Types](https://doc.rust-lang.org/nomicon/exotic-sizes.html#dynamically-sized-types-dsts)
-* 🌟 O(1) push/pop without [amortization](https://en.wikipedia.org/wiki/Amortized_analysis) (if you are willing to believe that malloc is O(1))
-* 🚫 O(1) list splitting
-* 🚫 O(1) list splicing
+* 🚫 [기괴한 침투형(intrusive) 기믹 짓거리](https://docs.rs/linked-hash-map/latest/linked_hash_map/) 할 수 있음? 안 됨
+* 🚫 [기괴한 락프리(lockfree) 스레드 똥꼬쇼](https://doc.rust-lang.org/std/sync/mpsc/) 할 수 있음? 안 됨
+* 🚫 [동적 크기 타입(Dynamically Sized Types)](https://doc.rust-lang.org/nomicon/exotic-sizes.html#dynamically-sized-types-dsts) 저장할 수 있음? 안 됨
+* 🌟 분할 상환(amortization) 없는 찐 O(1) push/pop 속도 보장? 오 이건 됨 (물론 여러분이 malloc 호출 따위가 O(1)이라는 헛소리를 기꺼이 믿는다는 전제하에 말이죠)
+* 🚫 O(1) 성능으로 리스트 싹둑 분할(splitting) 가능? 안 됨
+* 🚫 O(1) 성능으로 리스트 접합 수술(splicing) 가능? 안 됨
 
-Well... 1 out of 6 is... better than nothing! Do you see why I wanted to rip this thing out of std?
+뭐... 6개 중에 1개라도 되는 게... 아예 없는 것보단 낫죠! 제가 왜 굳이 이걸 std에서 끄집어내어 박살을 내고 싶어 했는지 이제 좀 이해가 가시나요?
 
-We're not going to make our list support "weird" stuff, because that's all adhoc and domain-specific. But the splitting and splicing thing, now that's something we can do!
+물론 우리는 우리 리스트가 저런 "기괴한" 짓거리들까지 다 지원하도록 마개조하진 않을 겁니다. 그런 건 너무 임시방편(adhoc)적이고 특정 도메인에 갇힌 노가다니까요. 하지만 분할(splitting)이랑 접합(splicing) 기능, 이건 까짓것 한 번 제대로 비벼볼 만합니다!
 
-But here's the problem: actually *reaching* the k<sup>th</sup> element in a LinkedList takes O(k) time, so how can we *possibly* do arbitrary splits and merges in O(1)? Well, the trick is that you don't have an API like `split_at(index)` -- you make a system where the user can statefully iterate to a position in the list and make O(1) modifications at that point!
+그런데 여기서 아주 좆같은 딜레마(problem)가 하나 생깁니다: LinkedList에서 k번째 원소에 *도달(reaching)*하는 것 자체만으로 이미 O(k)의 끔찍한 시간이 낭비되는데, 도대체 어떻게 임의의 위치에서 O(1)이라는 기적의 성능으로 분할과 병합을 *무슨 수로(possibly)* 해낼 수 있다는 걸까요? 자, 그 마술의 비밀은 애초에 `split_at(index)` 같은 무식한 API 따위를 제공하지 않는 것에 있습니다 -- 대신 우리는 사용자가 리스트의 특정 위치까지 상태를 유지하며 직접 기어간(iterate) 다음, 바로 그 도착한 위치에서 O(1) 성능으로 알루미늄캔 따듯 뚝딱 조작을 가할 수 있는(modifications) 시스템을 쥐여주면 됩니다!
 
-Hey, we already have iterators! Can we use them for this? Kind of... but one of their super-powers gets in the way. You may recall that the way that we write out the lifetimes for by-ref iterators means that the references they return *aren't* tied to the iterator. This lets us repeatedly call `next` and hold onto the elements:
+어, 근데 우린 이미 반복자(iterators)라는 든든한 녀석들을 굴리고 있잖아요! 얘네들을 써먹으면 안 되나요? 음... 엇비슷하게 되긴 합니다만... 이 녀석들이 가진 슈퍼-파워 중 하나가 오히려 발목을 거세게 걷어찹니다. 기억하실지 모르겠지만, 우리가 참조(by-ref) 반복자들에게 수명(lifetimes)을 덕지덕지 발라준 방식 때문에, 얘네들이 토해내는 참조자들은 반복자 본인의 수명에 *억매여 있지 않습니다*. 덕분에 우리는 얼마든지 `next`를 난사하며 원소들을 주머니에 든든하게 쟁여둘 수(hold onto) 있죠:
 
 ```rust ,ignore
 let mut list = ...;
@@ -28,96 +28,96 @@ let elem2 = list.next();
 if elem1 == elem2 { ... }
 ```
 
-If the returned references borrowed the iterator, then this code wouldn't work at all. The compiler would just complain about the second call to `next`! This flexibility is great, but it puts some implicit constraints on us:
+만약 뱉어낸 참조자들이 반복자에게 종속된 채 차용(borrowed) 상태를 유지했더라면, 저딴 코드는 컴파일러한테 컷당해서 아예 숨도 못 쉬었을 겁니다. 컴파일러 새끼가 두 번째 `next` 호출을 보자마자 거품을 물었겠죠! 이런 널널한 유연성(flexibility)은 참 달달하긴 한데, 동시에 우리에게 몇 가지 암묵적인 족쇄(implicit constraints)를 채웁니다:
 
-* By-Mutable-Ref Iterators can never go backwards and yield an element again, because the user would be able to get two `&mut`'s to the same element, breaking fundamental rules of the language.
+* 가변-참조(By-Mutable-Ref) 반복자들은 절대로 뒤로 후진해서 이미 뱉은 원소를 또다시 토해낼 수 없습니다. 왜냐면 그랬다간 사용자가 방금 똑같은 원소를 가리키는 두 개의 `&mut`을 쌍수검 마냥 거머쥐게 되어버리고, 이는 Rust 언어의 근본 뿌리(fundamental rules) 근간을 박살 내는 대역죄이기 때문입니다.
 
-* By-Ref Iterators can't have extra methods which could possibly modify the underlying collection in a way that would invalidate any reference that has already been yielded.
+* 참조(By-Ref) 반복자들은 밑바닥에 깔린 본체 컬렉션에 변형(modify)을 가할 여지가 있는 그 어떤 추가 메서드도 가질 수 없습니다. 만약 그런 게 있다면, 이미 방금 전에 토해내어 유저 손에 들린 참조자들이 휴지 조각(invalidate)으로 돌변해버릴 테니까요.
 
-Unfortunately, both of these things are *exactly* what we want our LinkedList API to do! So we can't just use iterators, we need something new: *Cursors*.
+그런데 아뿔싸, 하필이면 이 두 가지 대역죄가 *정확히(exactly)* 우리가 앞으로 LinkedList API에다 쑤셔 넣고 싶어 안달 난 그 기능들 아닙니까! 고로 낡아빠진 반복자 나부랭이들로는 택도 없고, 완전히 새롭고 쌈박한 구세주가 필요합니다: 바로 *커서(Cursors)* 말입니다.
 
-Cursors are exactly like the little blinking `|` you get when you're editing some text on a computer. It's a position in a sequence (the text) that you can move around (with the arrow keys), and whenever you type the edits happen at that point.
+커서는 여러분이 컴퓨터 메모장 켜놓고 텍스트 끄적거릴 때 깜빡거리는 바로 그 작고 귀여운 `|` 작대기와 완벽히 한 치의 오차도 없이 똑같습니다. 어떤 줄지어 선 시퀀스(텍스트) 속에서 여러분이 맘대로(방향키로) 이리저리 이동할 수 있는(move around) 특정 위치(position)를 의미하며, 타이핑을 칠 때마다 바로 그 깜빡이는 지점에서 수정(edits)이 벌어지는 원리죠.
 
-See if I just
+어디 한 번 제가 그냥
+ 
+엔터키를
 
-press
+눌러서
 
-enter
+멀쩡한 텍스트
 
-the whole
+덩어리를
 
-text
+두 동강으로 조각내보겠습니다.
 
-gets broken in half.
+아 죄송해요, 여러분이 지금 제 등 뒤에 서서 제가 타자 치는 걸 직관하고 계신 거 맞죠? 그럼 제가 방금 한 짓이 존나게 잘 이해되셨을 거라 믿어 의심치 않습니다, 그렇죠? 맞죠.
 
-Sorry you're standing behind me and watching me type this right? So that totally makes sense, right? Right.
+자, 만약 여러분이 살면서 재수 없게도 키보드에 달린 "insert"(삽입) 키를 실수로라도 억눌러본 끔찍한 불행(misfortune)을 겪어본 적이 있다면, 사실 커서라는 놈들한테 기술적으로 두 파벌의 해석(interpretations)이 존재한다는 걸 뼈저리게 체감하셨을 겁니다: 커서는 원소(글자)들 *사이에(between)* 다소곳이 끼어있을 수도 있고, 아니면 원소 그 *위에(on)* 처참하게 올라타 짓누를 수도 있죠. 장담하건대 전 세계 인류 역사상 그딴 "insert" 키를 굳이 자기 의지로 누른 정상인은 단 한 명도 없을 테고, 그 키는 오직 인류의 고통(Suffering Button)만을 위해 탄생한 악마의 버튼이 분명하므로, 둘 중 어느 방식이 더 올바르고 우월한(Better and Right) 갓-방식인지는 불 보듯 뻔합니다: 킹황 커서는 무조건 원소들 사이에 들어가야(go between) 합니다!
 
-Now if you've ever had the misfortune of having a keyboard with an "insert" key and actually pressed it, you know that there's actually technically two interpretations of cursors: they can either lie between elements (characters) or *on* elements. I'm pretty sure no one has ever pressed "insert" on purpose in their life, and that it exists purely as a Suffering Button, so it's pretty obvious which one is Better and Right: cursors go between elements!
+캬 시발 논리 전개 빈틈없는 거 보소(Pretty rock-solid logic), 감히 이 완벽한 팩트 폭행 논리에 반기를 들 병신은 세상에 아무도 없을 겁니다.
 
-Pretty rock-solid logic right there, I don't think anyone can disagree with me.
+예 뭐요? [2018년에 Rust의 LinkedList에 커서를 끼워 넣자는 RFC 제안서](https://github.com/rust-lang/rfcs/blob/master/text/2570-linked-list-cursors.md)가 올라왔었다고요?
 
-Sorry what? There was an [RFC in 2018 to add Cursors to Rust's LinkedList](https://github.com/rust-lang/rfcs/blob/master/text/2570-linked-list-cursors.md)?
+> 커서를 사용하면 리스트의 앞뒤를 자유롭게 탐색(seek)하며 현재 원소(current element)를 얻어올 수 있습니다. 가변 커서(CursorMut)를 사용하면 앞뒤로 탐색하며 원소들의 가변 참조를 얻을 수 있고, 현재 원소의 앞 혹은 뒤에 새로운 원소를 삭제하거나 쑤셔 넣을(insert and delete) 수 있습니다 (또한 분할이나 접합 같은 여러 조작 연산들도 수행할 수 있습니다).
 
-> With a Cursor one can seek back and forth through a list and get the current element. With a CursorMut One can seek back and forth and get mutable references to elements, and it can insert and delete elements before and behind the current element (along with performing several list operations such as splitting and splicing).
+*현재 원소(Current element)*?? 씨발 이 커서 새끼 원소들 사이가 아니라 원소 *위에(on)* 올라타 있잖아! 어떻게 저의 이토록 완벽하고 반박 불가한 킹황 논리를 기각해 버릴 수가 있죠?! 그래요 쒸발 마음대로 하쇼 가서 std에 처박힌 그 짝퉁 커서나 핥으면서 쓰시든가... 아니 잠깐, [지금이 2022년인데 아직도 Rust 1.60 버전에선 그 커서 새끼가 불안정(unstable) 딱지를 못 뗐다고요](https://doc.rust-lang.org/1.60.0/std/collections/linked_list/struct.CursorMut.html)?
 
-*Current element*? This cursor is *on* elements, not between them! I can't believe they didn't accept my totally rock-solid argument! So yeah you can just go use the Cursor in std... wait, it's [2022, and Rust 1.60 still has Cursor marked as unstable](https://doc.rust-lang.org/1.60.0/std/collections/linked_list/struct.CursorMut.html)?
+어이 잠깐만 기다려봐:
 
-Hey wait:
+> 커서는 항상 리스트의 두 원소 사이에 안착(rest)하며, 논리적으로 원형(circular) 형태의 인덱스를 갖습니다. 이를 찰떡같이 지원하기 위해, 리스트의 머리(head)와 꼬리(tail) 사이에는 None을 토해내는 유령(ghost) 같은 비-원소(non-element)가 하나 둥둥 떠다닙니다.
 
-> Cursors always rest between two elements in the list, and index in a logically circular way. To accommodate this, there is a "ghost" non-element that yields None between the head and tail of the list.
+어이 잠깐 스탑. 방금 이거 아까 그 RFC 제안서 내용이랑 정반대잖아??? 아니 시발 근데 메서드 문서(docs)에선 여전히 "현재(current)" 원소 운운하고 있네... 아니 잠깐만, 저 놈의 유령 어쩌고 하는 씹덕 같은 설정 어디서 존나 본 거 같은데. 아 맞다, 내가 예전에 프로토타입 끄적이면서 만들었던 [내 구형 linked-list 포크(fork)버전](https://docs.rs/linked-list/0.0.3/linked_list/struct.Cursor.html)이랑 똑같잖아?
 
-HEY WAIT. This is the opposite of what the RFC says??? But wait all the docs on the methods still refer to "current" elements... wait hold on, where have I seen this ghost stuff before. Oh wait, didn't I do that in [my old linked-list fork](https://docs.rs/linked-list/0.0.3/linked_list/struct.Cursor.html) where I prototyped?
+> 커서는 항상 리스트의 두 원소 사이에 안착(rest)하며, 논리적으로 원형(circular) 형태의 인덱스를 갖습니다. 이를 찰떡같이 지원하기 위해, 리스트의 머리(head)와 꼬리(tail) 사이에는 None을 토해내는 유령(ghost) 같은 비-원소(non-element)가 하나 둥둥 떠다닙니다.
 
-> Cursors always rest between two elements in the list, and index in a logically circular way. To accomadate this, there is a "ghost" non-element that yields None between the head and tail of the List.
+잠깐 스탑 시발 이게 도대체 무슨 좆같은 상황이지. 나 지금 농담 따먹기 하는 거 아니고 진짜 리얼로 공식 문서(Read The Docs) 읽고 있는 중이거든. 진짜로 std 이 새끼들이 RFC로는 내가 2015년에 들이밀었던 디자인이랑 딴판인 걸 채택해 놓고선, 정작 공식 문서 설명란엔 내가 끄적였던 프로토타입 주석을 복붙(copy-paste)해 놨다고??? std 이 개새끼들 내가 LinkedList 존나게 혐오한다는 책 쓰고 다닌다고 돌려까는 메타-좆질(meta-shitposting) 시전하는 거임????? 아니 시발 내가 그 프로토타입 만들어서 제발 이 쓰레기 같은 LinkedList 좀 쓸모 있게(not useless) 개조해서 std에 넣어달라고 똥꼬쇼한 건 맞는데, 아니 이게 시발 말이 되냐고 왓더 뻑??????????????
 
-Hold up what the fuck. This isn't a gag, I am actually trying to Read The Docs right now. Did std actually RFC a different design from the one I proposed in 2015, but then copy-paste the docs from my prototype??? Is std meta-shitposting me for writing a book about how much I hate LinkedList????? Like yeah I built that prototype to demonstrate the concept so that people would let me add it to std and make LinkedList not useless but, qu'est-ce que le fuck??????????????
+좋아 씨발 까짓거 이판사판이다, std 놈들도 속으론 내 디자인이 객관적으로 더 우월하다는 걸(superior one) 뼈저리게 인정하고 축복(blessing)해 주고 있는 게 분명하니, 우린 그냥 내 좆대로 내 방식을 밀어붙이겠습니다. 애초에 이번 챕터 자체가 내가 예전에 짰던 그 라이브러리를 지금 맨바닥부터 쌩으로 다시 뜯어고쳐(rewriting) 쓰는 내용이니까, API 디자인 한 톨도 안 바꾸고 그대로 재탕하는 건 나한테 오히려 땡큐(Good To Me)죠!
 
-Ok you know what, clearly std is blessing my design as the objectively superior one, so we're going to do my design. Also that's nice because this entire chapter is me actually literally rewriting that library from scratch, so not changing the API sounds Good To Me!
+여기 제가 그 당시에 대문짝만하게 박아놨던 최상단 문서(docs) 내용입니다:
 
-Here's the full top-level docs I wrote:
-
-> A Cursor is like an iterator, except that it can freely seek back-and-forth, and can safely mutate the list during iteration. This is because the lifetime of its yielded references are tied to its own lifetime, instead of just the underlying list. This means cursors cannot yield multiple elements at once.
+> 커서는 기본적으로 반복자(iterator)와 흡사하지만, 자유자재로 앞뒤를 오가며(seek) 탐색할 수 있고 심지어 탐색 도중에도 리스트를 안전하게 지지고 볶고(mutate) 변형할 수 있는 사기캐입니다. 이런 기행이 가능한 이유는 녀석이 토해내는 참조자들의 수명(lifetime)이 밑바닥 리스트 장부에 적히는 게 아니라 커서 본인의 수명에 찰싹 달라붙어 종속되기 때문입니다. 그 대가로 커서 이 자식은 한 번에 여러 개의 원소를 동시에 토해내는 다중 분신술(yield multiple elements at once)을 쓸 수 없습니다.
 >
-> Cursors always rest between two elements in the list, and index in a logically circular way. To accomadate this, there is a "ghost" non-element that yields None between the head and tail of the List.
+> 커서는 항상 리스트의 두 원소 사이에 안착(rest)하며, 논리적으로 원형(circular) 형태의 인덱스를 갖습니다. 이를 찰떡같이 지원하기 위해, 리스트의 머리(head)와 꼬리(tail) 사이에는 None을 토해내는 유령(ghost) 같은 비-원소(non-element)가 하나 둥둥 떠다닙니다.
 >
-> When created, cursors start between the ghost and the front of the list. That is, next will yield the front of the list, and prev will yield None. Calling prev again will yield the tail.
+> 갓 태어난 커서는 유령과 리스트의 맨 앞대가리(front) 사이에서 눈을 뜹니다. 고로 태어나자마자 `next`를 외치면 리스트의 맨 앞면상(front)을 핥게 될 것이고, `prev`를 외치면 유령 면상(None)을 보게 될 겁니다. 거기서 한 번 더 `prev`를 갈기면 리스트의 맨 꼬리(tail)가 튀어나오겠죠.
 
-Cute, even though we concluded that the whole "sentinel-node" thing was more trouble than it's worth, we're still going to end up with semantics that "pretend" there's a sentinel node so that the cursor can wrap around to the other side of the list.
+존나 귀엽네요. 비록 예전에 우리가 그 빌어먹을 "더미 노드(sentinel-node)" 기믹 따위 감수할 가치도 없는 쓰레기라 결론 내고 갖다 버리긴 했지만, 어쨌든 커서가 리스트 반대편 끝자락으로 자연스럽게 축지법 쓰며 넘어가게(wrap around) 만들려면 마치 더미 하나가 버젓이 살아있는 척 "연기(pretend)"하는 야매 시맨틱(semantics)을 어떻게든 꾸역꾸역 끼워 맞춰야만 합니다.
 
-*Skims over my old APIs some more*
+*예전에 짰던 내 낡은 API들을 다시 슬쩍 훑어보며(Skims over)*
 
 ```rust ,ignore
 fn splice(&mut self, other: &mut LinkedList<T>)
 ```
 
-> Inserts the entire list's contents right after the cursor.
+> 커서 바로 뒷구멍(after)에 거대한 리스트 내용물을 통째로 통짜로 쑤셔 박습니다(Inserts).
 
-Oh yeah, this is coming back to me. I wrote this when I was really mad about combinatoric explosion, and was trying to come up with a way for there to only be one copy of each operation. Unfortunately this is... semantically problematic. See, when the user wants to splice one list into another, they might want the cursor to end up *before* the splice or *after it*. The inserted list can be arbitrarily large, so it's a genuine issue for us to only allow for one and expect the user to walk over the entire inserted list!
+아 맞다 시발, 이 흑역사도 생각났어. 이거 내가 예전에 온갖 함수들 조합론 뇌절(combinatoric explosion) 터지는 꼴 보기 싫어서 개빡친 상태로, 그냥 똑같은 동작은 함수 하나로 통일되게 어떻게든 우겨넣어 보겠답시고 대가리 굴려 짠 건데. 불행하게도 이건... 시맨틱(semantically) 관점에서 봤을 때 개노답 병신(problematic) 같은 설계입니다. 생각해 보쇼, 유저가 리스트 두 개를 프랑켄슈타인처럼 이어 붙이려고(splice) 할 때, 커서가 수술 부위 *앞에(before)* 남겨지길 원할 수도 있고, 아님 수술 부위 *뒤에(after)* 남겨지길 원할 수도 있잖아요. 쑤셔 넣어질 리스트 크기가 코끼리만 할 수도 있는데, 무조건 한쪽 방향만 강요해 놓고 유로 유저보고 그 코끼리 등짝을 맨발로 다 횡단하길 기대하는(walk over) 건 진짜 존나 선 넘는 민폐(genuine issue)죠!
 
-We're gonna have to rework this design from the ground up after all. What does our Cursor type need? Well it needs to:
+결국 처음부터 설계(design)를 밑바닥부터 싹 뜯어고쳐야겠군요. 그럼 우리의 Cursor 타입에 대체 뭐가 필요할까요? 음, 여하튼 간에 녀석은:
 
-* point "between" two elements
-* as a nice little feature, keep track of what "index" is next
-* update the list itself to modify front/back/len. 
+* 두 원소 "사이(between)"의 허공을 짚을 줄 알아야 하고
+* 거기에 더해 애교 섞인 서비스 기능으로, 다음 타구가 몇 번째 "인덱스(index)"인지도 꼬박꼬박 추적해 주면(keep track) 좋고
+* 앞(front), 뒤(back), 길이(len)를 주무를 때 리스트 본체도 같이 알아서 업데이트시킬 수 있어야 합니다. 
 
-How do you point between two elements? Well, you don't. You just point at the "next" element. So, yeah even though we're exposing "cursor goes in-between" semantics, we're really implementing it as "cursor is on", and just pretending everything happens before or after that point.
+근데 두 원소 사이의 허공을 어떻게 짚죠? 정답, 못 짚습니다. 그냥 얌전히 "다음(next)" 원소 대가리나 찍고 있어야죠. 그러니까 네 맞습니다, 우리가 겉으로는 "커서가 원소 사이를 비집고 들어갑니다~" 하고 입에 침 바른 소리(semantics) 치고 다니더라도, 실제 밑단 구현(implementing)은 그냥 "커서가 원소 대가리 밟고 서 있음" 상태인 거고, 속으로만 이 모든 난리가 그 밟힌 놈 앞뒤로 벌어지고 있다고 정신 승리하며 "연기(pretending)"하는 겁니다.
 
-But there's a reason! The splice use-case wants to let the user choose whether they end up before or after the list, but this is... *horribly* complicated to express with the std API! They have splice_after and splice_before, but neither changes the cursor's position, so really you'd need splice_after_before and splice_after_after...
+하지만 나름의 숭고한 깊은 뜻(reason)이 있습니다! 접합(splice) 수술할 때 유저한테 수술 끝난 커서 위치를 앞이든 뒤든 맘대로 고르라고 던져주고 싶은데, 이걸 std API 스타일로 표현하자면... *존나게(horribly)* 기괴하게 꼬입니다! 걔네한텐 splice_after니 splice_before니 하는 건방진 건 있지만, 둘 다 커서 위치를 1도 안 바꿔준단 말이죠. 그러니까 진짜 제대로 된 위치 조정을 위해선 splice_after_before 나 splice_after_after 같은 병신 같은 이름의 함수를 만들어야 할 판인데...
 
-Wait no I'm being silly. In the std API you can just choose the node you want to end up on, and then use splice_after/before as appropriate.
+아 잠깐 아니네 나 지금 헛소리하고 있네. std API 쓰면 걍 자기가 멈추고 싶은 노드 위치로 뚜벅뚜벅 걸어간 다음 상황에 알맞게 splice_after/before 꽂아버리면 그만인데.
 
-*squints*
+*게슴츠레 쳐다보며(squints)*
 
-Wait is the std API actually good.
+잠깐만, 그럼 std API가 존나 생각보다 괜찮은(good) 거였음?
 
-*skims through the code*
+*코드를 대충 훑어본다(skims through the code)*
 
-Ok the std API is actually good.
+오케이 인정 std API는 사실 개명작(good)이었습니다.
 
-Alright screw it, we're going to [implement the RFC](https://github.com/rust-lang/rfcs/blob/master/text/2570-linked-list-cursors.md). Or at least the interesting parts of it.
+좋아 씨바 존심 다 버리고 [우린 그냥 그 잘난 RFC 제안서 고대로 구현(implement)하겠습니다](https://github.com/rust-lang/rfcs/blob/master/text/2570-linked-list-cursors.md). 뭐 최소한 그중에 좀 재밌어 보이는 흥미로운(interesting) 부품들만 떼와서요.
 
-I have my quibbles with some of the terminology std uses, but cursors are always going to be a bit brain-melty: `iter().next_back()`  gets you `back()`, so that's good, but then each subsequent `next_back()` is actually bringing you *closer to the front* and indeed, every pointer we follow is a "front" pointer! If I think about this seeming-paradox too much it hurts my brain, so, I can certainly respect going for different terminology to avoid this.
+물론 std 놈들이 남발하는 몇몇 용어 쪼가리(terminology)엔 여전히 존나 꼬투리 잡고(quibbles) 싶은 마음이 굴뚝같지만, 애초에 커서라는 놈들 자체가 언제나 우리 뇌간을 촉촉하게 녹여버릴(brain-melty) 몽환적인 놈들이니까요: `iter().next_back()`을 갈기면 꼬리(`back()`)를 핥게 되니 이건 참 직관적이고 좋은데, 씹 그 이후로 `next_back()`을 갈길 때마다 실제론 점점 *맨 앞면상(front)을 향해 다가가게* 되고, 애초에 우리가 따라가는 그 수많은 포인터 줄기들조차 죄다 "front" 포인터들이잖아요! 이 끝없는 아이러니 역설(seeming-paradox)에 대해 너무 깊게 생각하려다간 제 가여운 뇌세포가 증발해 버릴 지경이니, 이딴 미친 파국을 피하기 위해 쟤네들이 일부러 아예 색다른 용어(different terminology)를 써서 회피하는 전략은 저도 진심으로 존경(respect)하며 납득할 수 있습니다.
 
-The std API talks about operations before "before" (towards the front) and "after" (towards the back), and instead of `next` and `next_back`, it... calls things `move_next` and `move_prev`. HRM. Ok so they're getting into a bit of the iterator terminology, but at least `next` doesn't evoke front/back, and helps you orient how things behave compared to the iterators.
+std API는 앞구멍 "이전(before)"과 뒷구멍 "이후(after)"라는 오묘한 철학을 내세우며, `next` 나 `next_back` 같은 천박한 이름 대신, 음... `move_next` 와 `move_prev` 같은 엣지있는 작명을 썼습니다. 흠(HRM). 오케이 뭐 어찌 됐든 슬쩍 반복자(iterator) 세계관 용어에 발을 걸치고 있긴 하지만, 최소한 `next`라는 단어가 앞(front)/뒤(back)의 극단적인 방향성을 연상시키진(evoke) 않으니, 최소한 반복자 놈들의 패악질과 비교해서 얘네가 과연 어떤 움직임을 보일지(how things behave) 방향 감각을 잡는 데엔(orient) 도움이 됩니다.
 
-We can work with this.
+이 정도면 충분히 같이 굴려볼만(work with) 하겠네요.

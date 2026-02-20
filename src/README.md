@@ -1,309 +1,195 @@
-# Learn Rust With Entirely Too Many Linked Lists
+# 너무 많은 연결 리스트로 배우는 Rust
 
-> Got any issues or want to check out all the final code at once?
-> [Everything's on Github!][github]
+> 이슈가 있거나 최종 코드를 한 번에 확인하고 싶으신가요?
+> [모든 소스코드는 Github에 있습니다!][github]
 
-> **NOTE**: The current edition of this book is written against Rust 2018,
-> which was first released with rustc 1.31 (Dec 8, 2018). If your rust toolchain
-> is new enough, the Cargo.toml file that `cargo new` creates should contain the
-> line `edition = "2018"` (or if you're reading this in the far future, perhaps
-> some even larger number!). Using an older toolchain is possible, but unlocks
-> a secret **hardmode**, where you get extra compiler errors that go completely
-> unmentioned in the text of this book. Wow, sounds like fun!
+> **참고**: 이 책의 현재 에디션은 2018년 12월 8일에 처음 출시된 rustc 1.31 기준인 Rust 2018 버전에 맞춰 작성되었습니다. 만약 사용 중인 Rust 툴체인이 충분히 최신 버전이라면, `cargo new`로 생성된 Cargo.toml 파일에 `edition = "2018"`이라는 줄이 (또는 먼 미래라면 더 높은 숫자가!) 포함되어 있을 것입니다. 이전 툴체인을 사용할 수도 있지만, 이 책에는 전혀 언급되지 않은 추가 컴파일러 에러를 마주해야 하는 숨겨진 **하드모드**가 열리게 됩니다. 와, 정말 재밌겠네요!
 
-I fairly frequently get asked how to implement a linked list in Rust. The
-answer honestly depends on what your requirements are, and it's obviously not
-super easy to answer the question on the spot. As such I've decided to write
-this book to comprehensively answer the question once and for all.
+저는 종종 Rust에서 연결 리스트(Linked List)를 어떻게 구현해야 하는지 질문을 받습니다. 사실 그 대답은 요구사항이 무엇인지에 따라 완전히 달라지며, 즉석에서 딱 잘라 답하기 쉽지 않습니다. 그래서 저는 이 질문에 대한 명확하고 포괄적인 답변을 한 번에 정리하기 위해 이 책을 쓰기로 결심했습니다.
 
-In this series I will teach you basic and advanced Rust programming
-entirely by having you implement 6 linked lists. In doing so, you should
-learn:
+이 시리즈에서는 당신이 6가지 형태의 연결 리스트를 직접 구현하도록 이끌며, 기초적이고 심화된 Rust 프로그래밍 지식 전체를 가르쳐 드릴 것입니다. 이 과정을 통해 다음 내용들을 배울 수 있습니다:
 
-* The following pointer types: `&`, `&mut`, `Box`, `Rc`, `Arc`, `*const`, `*mut`, `NonNull`(?)
-* Ownership, borrowing, inherited mutability, interior mutability, Copy
-* All The Keywords: struct, enum, fn, pub, impl, use, ...
-* Pattern matching, generics, destructors
-* Testing, installing new toolchains, using `miri`
-* Unsafe Rust: raw pointers, aliasing, stacked borrows, UnsafeCell, variance
+* 포인터 타입들: `&`, `&mut`, `Box`, `Rc`, `Arc`, `*const`, `*mut`, `NonNull`(?)
+* 소유권(Ownership), 대여(Borrowing), 상속된 가변성(Inherited mutability), 내부 가변성(Interior mutability), Copy
+* 모든 주요 키워드들: struct, enum, fn, pub, impl, use, ...
+* 패턴 매칭, 제네릭, 소멸자(Destructors)
+* 테스트 작성법, 새로운 툴체인 설치, `miri` 도구 사용법
+* 안심할 수 없는(Unsafe) Rust: 원시 포인터, 앨리어싱, Stacked borrows, UnsafeCell, 가변성(variance)
 
-Yes, linked lists are so truly awful that you deal with all of these concepts in
-making them real.
+그렇습니다. 연결 리스트는 실제로 이 모든 개념을 총동원해야 비로소 제대로 만들 수 있을 만큼 참으로 끔찍한 자료형입니다.
 
-Everything's in the sidebar (may be collapsed on mobile), but for quick
-reference, here's what we're going to be making:
+모든 목차는 사이드바에 있습니다(모바일 기기에서는 접혀있을 수 있습니다). 빠른 참고를 위해 우리가 만들 것들의 개요를 소개합니다:
 
-1. [A Bad Singly-Linked Stack](first.md)
-2. [An Ok Singly-Linked Stack](second.md)
-3. [A Persistent Singly-Linked Stack](third.md)
-4. [A Bad But Safe Doubly-Linked Deque](fourth.md)
-5. [An Unsafe Singly-Linked Queue](fifth.md)
-6. [TODO: An Ok Unsafe Doubly-Linked Deque](sixth.md)
-7. [Bonus: A Bunch of Silly Lists](infinity.md)
+1. [좋지 않은 단방향 연결 스택(Singly-Linked Stack)](first.md)
+2. [괜찮은 단방향 연결 스택](second.md)
+3. [불변(Persistent) 단방향 연결 스택](third.md)
+4. [안 좋지만 안전한 양방향 연결 덱(Doubly-Linked Deque)](fourth.md)
+5. [안전하지 않은 단방향 연결 큐(Singly-Linked Queue)](fifth.md)
+6. [상용 수준의 '안전하지 않은(Unsafe)' 양방향 연결 덱](sixth.md)
+7. [보너스: 바보같은 여러가지 리스트들](infinity.md)
 
-Just so we're all the same page, I'll be writing out all the commands that I
-feed into my terminal. I'll also be using Rust's standard package manager, Cargo,
-to develop the project. Cargo isn't necessary to write a Rust program, but it's
-*so much* better than using rustc directly. If you just want to futz around you
-can also run some simple programs in the browser via [play.rust-lang.org][play].
+우리 모두가 같은 시작점을 가질 수 있도록 터미널에 입력하는 모든 명령어를 적어놓겠습니다. 또한 프로젝트를 개발할 때 Rust의 표준 패키지 매니저인 Cargo를 사용할 것입니다. Rust 프로그램을 작성하는 데 Cargo가 꼭 필요한 것은 아니지만 rustc 컴파일러를 직접 다루는 것보다 *훨씬* 뛰어납니다. 만약 가볍게 테스트해보고 싶다면 [play.rust-lang.org][play]를 통해 브라우저에서 직접 간단한 코드를 실행해볼 수도 있습니다.
 
-In later sections, we'll be using "rustup" to install extra Rust tooling.
-I strongly recommend [installing all of your Rust toolchains using rustup](https://www.rust-lang.org/tools/install).
+이후 챕터들에서는 추가 Rust 도구를 설치하기 위해 "rustup"을 사용할 것입니다.
+따라서 가급적 [rustup을 사용하여 모든 Rust 툴체인을 설치](https://www.rust-lang.org/tools/install)하기를 강력히 권장합니다.
 
-Let's get started and make our project:
+이제 바로 프로젝트를 생성해보겠습니다:
 
 ```text
 > cargo new --lib lists
 > cd lists
 ```
 
-We'll put each list in a separate file so that we don't lose any of our work.
+작업 내용이 섞이는 것을 막기 위해 각 리스트는 각각의 분리된 파일에 작성할 것입니다.
 
-It should be noted that the *authentic* Rust learning experience involves
-writing code, having the compiler scream at you, and trying to figure out
-what the heck that means. I will be carefully ensuring that this occurs as
-frequently as possible. Learning to read and understand Rust's generally
-excellent compiler errors and documentation is *incredibly* important to
-being a productive Rust programmer.
+한 가지 기억해야 할 점은, *자연스러운* Rust 학습 과정은 코드를 작성하고, 컴파일러가 여러분에게 비명을 지르게 한 뒤, 대체 그 비명이 무슨 뜻인지 알아내기 위해 머리를 쥐어뜯는 일의 반복이라는 것입니다. 저는 이 책에서 이러한 과정이 가능한 한 자주 발생하도록 세심하게 설계할 것입니다. Rust의 전반적으로 우수한 컴파일러 에러 메시지와 공식 문서를 읽고 이해하는 방법은 생산력 있는 Rust 프로그래머가 되기 위해 *엄청나게* 중요하기 때문입니다.
 
-Although actually that's a lie. In writing this I encountered *way* more
-compiler errors than I show. In particular, in the later chapters I won't be
-showing a lot of the random "I typed (copy-pasted) bad" errors that you
-expect to encounter in every language. This is a *guided tour* of having the
-compiler scream at us.
+물론 사실 이건 거짓말입니다. 제가 이 글을 쓰면서 마주한 컴파일러 에러는 여기에 보여드리는 것보다 훨씬, *훨~~씬* 많았습니다. 특히 후반부 장에서는, 어떤 프로그래밍 언어를 쓰든 흔히 경험하게 될 "제가 오타 냈네요 (또는 복붙을 잘못했네요)" 부류의 에러들을 모두 보여주지는 않을 것입니다. 이 책은 어디까지나 컴파일러가 우리에게 비명을 지르는 모습을 살펴보는 일종의 *가이드 투어*입니다.
 
-We're going to be going pretty slow, and I'm honestly not going to be very
-serious pretty much the entire time. I think programming should be fun, dang it!
-If you're the type of person who wants maximally information-dense, serious, and
-formal content, this book is not for you. Nothing I will ever make is for you.
-You are wrong.
+우리는 꽤 천천히 진행할 예정인데, 솔직히 저는 끝까지 그다지 진지할 생각이 없습니다. 프로그래밍은 모름지기 재미있어야 하니까요! 만약 당신이 최대한 정보 밀도 높은, 진지하고 공식적인 문서를 원하신다면 이 책은 당신을 위한 책이 아닙니다. 사실 제가 만드는 어떤 것도 당신을 위해 만들어지지 않을 것입니다. 당신이 틀렸습니다.
 
 
 
 
-# An Obligatory Public Service Announcement
+# 반드시 읽어야 하는 공익광고 (PSA)
 
-Just so we're totally 100% clear: I hate linked lists. With
-a passion. Linked lists are terrible data structures. Now of course there's
-several great use cases for a linked list:
+한 가지 분명히 해 두겠습니다. 저는 100% 진심으로 연결 리스트를 아주 열렬히 증오합니다. 연결 리스트는 끔찍한 자료구조입니다. 물론 연결 리스트가 딱 들어맞는 훌륭한 사용 사례들도 존재하긴 합니다:
 
-* You want to do *a lot* of splitting or merging of big lists. *A lot*.
-* You're doing some awesome lock-free concurrent thing.
-* You're writing a kernel/embedded thing and want to use an intrusive list.
-* You're using a pure functional language and the limited semantics and absence
-  of mutation makes linked lists easier to work with.
-* ... and more!
+* 엄청나게 거대한 리스트를 나누거나(`split`) 합치는(`merge`) 작업을 *아주 많이* 해야 하는 경우
+* 잠금 없는(lock-free) 멋진 동시성 처리 로직을 만들어야 하는 경우
+* 커널이나 임베디드 시스템에서 인트루시브(intrusive) 리스트를 사용하는 경우
+* 순수 함수형 언어를 사용하면서 가변성이 제한되고 부작용이 없어야 해서 연결 리스트가 더 다루기 쉬운 경우
+* ... 그 외 기타 등등!
 
-But all of these cases are *super rare* for anyone writing a Rust program. 99%
-of the time you should just use a Vec (array stack), and 99% of the other 1%
-of the time you should be using a VecDeque (array deque). These are blatantly
-superior data structures for most workloads due to less frequent allocation,
-lower memory overhead, true random access, and cache locality.
+하지만 이 모든 사례들은 Rust 프로그램을 작성하는 사람 입장에서는 *대단히 드문* 경우에 해당합니다. 99%의 경우 여러분은 그냥 `Vec` (배열 스택)을 사용해야 하고, 나머지 1%의 경우 중 99%는 `VecDeque` (배열 덱)를 사용해야 합니다. 잦지 않은 메모리 할당 빈도, 더 적은 메모리 오버헤드, 진짜 랜덤 액세스, 캐시 지역성(Cache locality) 등 여러 이유로 볼 때, 이 자료구조들이 연결 리스트보다 대부분의 작업량에서 노골적으로 우월하기 때문입니다.
 
-Linked lists are as *niche* and *vague* of a data structure as a trie. Few would
-balk at me claiming a trie is a niche structure that your average programmer
-could happily never learn in an entire productive career -- and yet linked lists
-have some bizarre celebrity status. We teach every undergrad how to write a
-linked list. It's the only niche collection
-[I couldn't kill from std::collections][rust-std-list]. It's
-[*the* list in C++][cpp-std-list]!
+연결 리스트는 트라이(Trie)만큼이나 *니치(Niche, 틈새)*하고 *모호한* 자료구조에 불과합니다. 트라이(Trie)가 니치한 자료구조라서 일반적인 프로그래머라면 평생 일하면서 한 번도 쓸 일이 없을 수도 있다는 데에는 모두가 동의할 겁니다. 그런데 왜 연결 리스트는 유독 이토록 기이할 만치 유명 인사인 걸까요? 우리는 학부생 모두에게 연결 리스트를 구현하는 법을 가르칩니다. 이것은 제가 [std::collections에서 죽여버리지 못했던][rust-std-list] 유일한 니치 컬렉션이자, 나아가 [C++에서는 *절대적인* 리스트의 지위를 선점하고 있습니다!][cpp-std-list]
 
-We should all as a community say *no* to linked lists as a "standard" data
-structure. It's a fine data structure with several great use cases, but those
-use cases are *exceptional*, not common.
+우리는 커뮤니티로서 다같이 "표준" 자료구조라는 명목으로 남용되는 연결 리스트에 *아니요*라고 말할 수 있어야 합니다. 연결 리스트는 물론 훌륭한 사용 사례가 몇몇 존재하는 괜찮은 자료구조지만 언제까지나 그 쓰임은 일반적인 상황이 아닌 *예외적인* 때여야만 합니다.
 
-Several people apparently read the first paragraph of this PSA and then stop
-reading. Like, literally they'll try to rebut my argument by listing one of the
-things in my list of *great use cases*. The thing right after the first
-paragraph!
+문제는 앞서 쓴 공익광고의 첫 단락만 읽고 더 이상 읽지 않는 분들이 있다는 점입니다. 농담이 아니라 이 분들은 제 *'훌륭한 사용 사례 리스트'* 중 하나를 들먹이면서 제 주장을 반박하려 듭니다. 바로 저 위에 써놓은 것 중 하나로요!
 
-Just so I can link directly to a detailed argument, here are several attempts
-at counter-arguments I have seen, and my response to them. Feel free to skip
-to [the first chapter](first.md) if you just want to learn some Rust!
+자, 그래서 제가 상세한 반박 글의 링크를 바로 드릴 수 있도록 여태 보아온 주요 반박 내용과 그에 대한 재반박을 아래에 담았습니다. 당장 Rust부터 배우고 싶다면 가볍게 건너뛰고 바로 [첫 번째 챕터](first.md)로 넘어가시면 됩니다!
 
 
 
 
-## Performance doesn't always matter
+## 성능이 항상 중요한 건 아니잖아요
 
-Yes! Maybe your application is I/O-bound or the code in question is in some
-cold case that just doesn't matter. But this isn't even an argument for using
-a linked list. This is an argument for using *whatever at all*. Why settle for
-a linked list? Use a linked hash map!
+맞습니다! 어쩌면 여러분의 애플리케이션 병목이 I/O 바운드 쪽일 수도 있고, 해당 코드가 있는 부분이 완전히 무시해도 될 정도로 거의 호출되지 않는 콜드(Cold) 케이스일 수도 있습니다. 하지만 그렇다고 해서 그게 단지 연결 리스트를 사용할 이유가 될 수는 없습니다. 그건 아무 자료구조나 *막 갖다 써도 상관없다*는 말일 뿐입니다. 왜 굳이 연결 리스트에 안주해야 하죠? 그럼 링크드 해시 맵(Linked Hash Map)이라도 한번 써보시지요!
 
-If performance doesn't matter, then it's *surely* fine to apply the natural
-default of an array.
+단순히 성능이 중요하지 않다면 자연스러운 기본 형태인 배열(Array)을 취해도 *확실히* 괜찮을 것입니다.
 
 
 
 
 
-## They have O(1) split-append-insert-remove if you have a pointer there
+## 임의의 포인터 위치에서 O(1) 분할/삽입/삭제/이어붙이기가 되잖아요
 
-Yep! Although as [Bjarne Stroustrup notes][bjarne] *this doesn't actually
-matter* if the time it takes to get that pointer completely dwarfs the
-time it would take to just copy over all the elements in an array (which is
-really quite fast).
+맞습니다! 비록 [비야네 스트롭스트룹(Bjarne Stroustrup)도 언급했듯이][bjarne] 그 위치를 나타내는 포인터를 찾는 시간이 배열의 전체 요소들을 복사하는 시간(놀라울 만큼 빠릅니다!)을 완전히 상회해 버린다면 *사실상 아무런 의미도 없겠지만요*.
 
-Unless you have a workload that is heavily dominated by splitting and merging
-costs, the penalty *every other* operation takes due to caching effects and code
-complexity will eliminate any theoretical gains.
+분할(Splitting)과 병합(Merging) 비용이 과도하게 많이 들어가는 워크로드를 다루고 있지 않는 이상, 연결 리스트의 캐시 파괴 효과와 코드 복잡성으로 인해 *그 외의 모든 연산* 들이 짊어져야 하는 페널티가 이런 이론적 이점을 다 까먹어버릴 것입니다.
 
-*But yes, if you're profiling your application to spend a lot of time in
-splitting and merging, you may have gains in a linked list*.
+*하지만 역시나 맞습니다. 프로파일링을 해봤더니 애플리케이션의 작업들이 전부 병합과 분리에만 시간을 쏟아 붓고 있다면, 연결 리스트가 유리할 수도 있습니다*.
 
 
 
 
 
-## I can't afford amortization
+## 할당 비용 상각(Amortization)을 감당할 수 없어요
 
-You've already entered a pretty niche space -- most can afford amortization.
-Still, arrays are amortized *in the worst case*. Just because you're using an
-array, doesn't mean you have amortized costs. If you can predict how many
-elements you're going to store (or even have an upper-bound), you can
-pre-reserve all the space you need. In my experience it's *very* common to be
-able to predict how many elements you'll need. In Rust in particular, all
-iterators provide a `size_hint` for exactly this case.
+그렇다면 당신은 이미 꽤 틈새(Niche) 영역에 들어와 있는 겁니다—대부분의 경우에는 비용 분할을 감당할 수 있거든요. 게다가 배열의 비용 상각이란 어디까지나 *최악의 경우*를 상정한 것일 뿐입니다. 다시 말해 배열을 사용한다고 해서 반드시 늘 상각 비용이 드는 것은 아닙니다. 만약 저장할 요소의 개수를 미리 알 수 있거나 (혹은 최대 한계치를 잡을 수 있다면), 필요한 모든 공간을 미리 예약(reserve)할 수 있습니다. 제 경험에 따르면 필요한 공간의 크기를 예측할 수 있는 경우가 *정말* 많았습니다. 특히 Rust에서는 모든 반복자(Iterator)가 바로 이런 상황을 대비하여 `size_hint`를 제공해줍니다.
 
-Then `push` and `pop` will be truly O(1) operations. And they're going to be
-*considerably* faster than `push` and `pop` on linked list. You do a pointer
-offset, write the bytes, and increment an integer. No need to go to any kind of
-allocator.
+이를 잘 활용하면 배열에 요소를 추가하거나(`push`) 빼는(`pop`) 작업이 비로소 진짜 O(1) 수준의 연산이 됩니다. 게다가 이건 (힙 공간을 할당받아야만 하는) 연결 리스트에서의 동일 작업보다 *훨씬* 더 빠릅니다. 포인터 오프셋 값 변경, 바이트 덮어쓰기, 숫자 값 증가만 하고 끝나버려서, 별도로 할당자를 번거롭게 찾아갈 필요도 없습니다.
 
-How's that for low latency?
+이보다 훌륭한 저지연(Low latency) 특성이 어디 있겠습니까?
 
-*But yes, if you can't predict your load, there are worst-case
-latency savings to be had!*
+*하지만 맞습니다, 만약 사용량을 예측할 수 없을 정도로 불규칙하다면 최악의 레이턴시를 방지하기 위해 상각 비용 절약이 좋은 방안인 건 맞습니다!*
 
 
 
 
 
-## Linked lists waste less space
+## 연결 리스트가 낭비되는 메모리 공간이 더 적잖아요
 
-Well, this is complicated. A "standard" array resizing strategy is to grow
-or shrink so that at most half the array is empty. This is indeed a lot of
-wasted space. Especially in Rust, we don't automatically shrink collections
-(it's a waste if you're just going to fill it back up again), so the wastage
-can approach infinity!
+음.. 꽤 복잡한 문제이긴 합니다. 배열(Array)에서 일반적으로 사용하는 크기 조절 전략은 메모리 공간의 용량이 절반 이하로 비워지도록 크기를 키우고 줄이는 것입니다. 이건 분명 엄청난 공간낭비가 맞습니다. 특히 Rust에선 굳이 크기 축소를 자동으로 맡지 않기 때문에 (어차피 또 금방 채워질 공간이라면 축소 자체가 낭비이므로), 심하면 공간 낭비가 무한대로 치솟을 런지도 모릅니다!
 
-But this is a worst-case scenario. In the best-case, an array stack only has
-three pointers of overhead for the entire array. Basically no overhead.
+하지만 이건 어디까지나 최악의 케이스입니다. 최상의 경우에는 어떤 배열의 스택이든 단 3개의 포인터 길이만 오버헤드로 가져갑니다. 그 말인즉슨 사실상 오버헤드가 없다는 겁니다.
 
-Linked lists on the other hand unconditionally waste space per element.
-A singly-linked list wastes one pointer while a doubly-linked list wastes
-two. Unlike an array, the relative wasteage is proportional to the size of
-the element. If you have *huge* elements this approaches 0 waste. If you have
-tiny elements (say, bytes), then this can be as much as 16x memory overhead
-(8x on 32-bit)!
+반면 연결 리스트는 무조건 요소당 포인터 크기만큼 공간을 낭비합니다. 단일 연결(singly-linked) 리스트는 한 개의 포인터를 낭비하고 이중 연결(doubly-linked) 리스트는 두 개를 오버헤드로 씁니다. 배열과는 달리, 이런 상대적 공간 낭비는 보관 중인 요소 크기에 정비례합니다. 만약 요소들 크기가 엄청나게 방대하다면 이 오버헤드 비율 자체는 0에 가까워질 것입니다. 하지만 요소들 크기가 아주 작다면 (예: 바이트 배열), 오버헤드는 무려 16배 (32비트 환경에선 8배)에 이를 수도 있습니다!
 
-Actually, it's more like 23x (11x on 32-bit) because padding will be added
-to the byte to align the whole node's size to a pointer.
+사실 포인터 주솟값(Alignment)에 전체 노드 사이즈를 정렬하기 위해 바이트 패딩 공간까지 끼워넣어야 하다보니 실제 낭비율은 23배 (32비트 환경에선 11배) 정도에 달합니다.
 
-This is also assuming the best-case for your allocator: that allocating and
-deallocating nodes is being done densely and you're not losing memory to
-fragmentation.
+게다가 이마저도 할당자가 아주 빈틈없이 노드를 할당 및 해제하고 있어서 파편화(Fragmentation) 등으로 추가 메모리를 잃지 않는, 최고의 베스트 케이스 가정일 뿐입니다.
 
-*But yes, if you have huge elements, can't predict your load, and have a
-decent allocator, there are memory savings to be had!*
+*하지만 역시나 맞습니다, 만약 요소 크기가 매우 거대하고 사용량도 예측 불가능할 때 성능 좋은 할당자가 뒷받침되고 있다면 공간 절감이 가능한 건 맞습니다!*
 
 
 
 
 
-## I use linked lists all the time in &lt;functional language&gt;
+## 전 &lt;함수형 언어&gt; 환경에서 항상 연결 리스트 쓰는데요
 
-Great! Linked lists are super elegant to use in functional languages
-because you can manipulate them without any mutation, can describe them
-recursively, and also work with infinite lists due to the magic of laziness.
+최상의 선택이죠! 연결 리스트는 함수형 프로그래밍 언어에서 다루기 무척 우아한 자료구조입니다. 왜냐하면 일절 가변성(Mutation) 없이 자료구조를 다룰 수 있고 재귀적인 표현이 가능하며, 지연 평가(Laziness)의 마법 덕분에 무한 리스트(Infinite List) 기반의 조작도 아무런 문제 없이 다룰 수 있기 때문입니다.
 
-Specifically, linked lists are nice because they represent an iteration without
-the need for any mutable state. The next step is just visiting the next sublist.
+구체적으로 연결 리스트 구조 자체가 가변 상태가 필요 없이 반복 형태(Iteration)를 나타내기에 딱 맞습니다. 다음 수행은 결국 그냥 다음 하위 리스트(Sublist)를 통째로 방문하는 것뿐이니까요.
 
-Rust mostly does this kind of thing with [iterators][]. They can be infinite 
-and you can map, filter, reverse, and concatenate them just like a functional list,
-and it will all be done just as lazily!
+Rust도 이런 비슷한 형태를 대부분 [이터레이터(Iterators)][iterators]로 처리합니다. (지연 평가 지원 덕에) 함수형 프로그래밍에서의 연결 리스트가 제공하는 `map`, `filter`, `reverse`, `concatenate`와 같은 기능을 무한하게 지원하면서도 정말 게으르게 수행시킬 수 있습니다!
 
-Rust also lets you easily talk about sub-arrays with *[slices][]*. Your usual
-head/tail split in a functional language is [just `slice.split_at_mut(1)`][split].
-For a long time, Rust had an experimental system for pattern matching on
-slices which was super cool, but the feature was simplified when it was
-stabilized. Still, [basic slice patterns][slice-pats] are neat! And of course,
-slices can be turned into iterators!
+또한 Rust는 *[슬라이스(Slices)][slices]* 덕택에 매우 쉽게 부분 배열(Sub-arrays)을 나타낼 수도 있습니다. 일반적인 함수형 언어들이 리스트 앞단(head)과 뒷단 일체(tail)을 잘라 나눌 때 Rust는 [그저 `slice.split_at_mut(1)` 하나로 끝냅니다][split].
+한동안 Rust에는 슬라이스에 기반한 아주 멋진 패턴 탐지 지원 시스템이 실험 기능으로 존재했었지만, 기능을 안정화시키는 과정에서 단순화되었습니다. 하지만 [단순화된 기본 슬라이스 매칭(Basic slice patterns)][slice-pats]조차도 너무나 근사합니다! 게다가 이렇게 찾은 슬라이스는 언제든 곧장 반복자(Iterator) 형태로 변경할 수 있습니다!
 
-*But yes, if you're limited to immutable semantics, linked lists can be very
-nice*.
+*하지만 그렇습니다. 제한적인 불변성(Immutable semantics)만 사용할 수 있는 함수형 환경이라면 당연히 연결 리스트가 아주 훌륭한 선택입니다*.
 
-Note that I'm not saying that functional programming is necessarily weak or
-bad. However it *is* fundamentally semantically limited: you're largely only
-allowed to talk about how things *are*, and not how they should be *done*. This
-is actually a *feature*, because it enables the compiler to do tons of [exotic
-transformations][ghc] and potentially figure out the *best* way to do things
-without you having to worry about it. However this comes at the cost of being
-*able* to worry about it. There are usually escape hatches, but at some limit
-you're just writing procedural code again.
+참고로 저는 함수형 프로그래밍이 무조건적으로 약하거나 나쁜 것이라고는 말하고 있지 않습니다. 다만 의미론적으로 몹시 제한적이긴 합니다: 보통 사물의 *현재 상태* 에 관해서만 서술할 수 있고 사물을 어떻게 다뤄야 *해야 할지(방법론)* 를 묘사하기 어렵습니다. 그런데 이게 도리어 *기능(Feature)* 입니다. 이것이 있기 때문에 컴파일러는 여러분이 머리를 감싸쥐며 고민하지 않아도 코드를 효율적으로 처리할 수 있는 최고의 방법을 알아내 엄청난 수준의 [이국적인 기계어(Exotic transformations)][ghc] 최적화를 수행할 수 있습니다. 물론 이렇게까지 컴파일러에 맹신하는 데에는 '고민 가능한 여지 자체'를 포기해야 한다는 어마어마한 대가가 뒤따르게 됩니다. 결국 이를 풀기 위해선 안전장치가 없는 탈출구(Escape hatches)를 쓸 수밖에 없고 특정 지점에서는 결국 프로시저 위주의 언어로 전락하고야 마는 것이죠.
 
-Even in functional languages, you should endeavour to use the appropriate data
-structure for the job when you actually need a data structure. Yes,
-singly-linked lists are your primary tool for control flow, but they're a
-really poor way to actually store a bunch of data and query it.
+함수형 언어 내에서조차도, 여러분은 데이터 구조가 실제로 필요한 상황에 맞춰 적합한 데이터 도구를 사용해야 합니다. 당연히 단방향 연결 리스트 스택은 제어 흐름에 맞는 일차적인 제어 흐름 자료구조이지만 실제로 다량의 데이터를 저장하고 그 위에서 무언가를 쿼리하여 결과를 보여줘야 한다면 정말 부적합한 선택일 수밖에 없습니다.
 
 
-## Linked lists are great for building concurrent data structures!
+## 연결 리스트는 동시성(Concurrent) 데이터 구조를 만들 때 정말 좋잖아요!
 
-Yes! Although writing a concurrent data structure is really a whole different
-beast, and isn't something that should be taken lightly. Certainly not something
-many people will even *consider* doing. Once one's been written, you're also not
-really choosing to use a linked list. You're choosing to use an MPSC queue or
-whatever. The implementation strategy is pretty far removed in this case!
+맞습니다! 비록 동시성 데이터 구조를 작성하는 작업 자체는 앞선 문제들과 완전히 결이 다른 야수 같은 난제이며 절대로 가볍게 다룰 수 없는 주제이긴 하지만요. 사실 그걸 시도하려고 *마음먹을* 사람은 별로 많지 않을 것입니다. 게다가 일단 만들어지기만 한다면, 이 사용 방식은 연결 리스트 자료구조를 쓸 것이냐 하는 기존의 선택 선상을 이미 벗어납니다. MPSC (Multi-Producer Single-Consumer) 큐 라든지 그 외 다른 도구를 사용하게 되는 셈이죠. 여기서 얘기하는 내용의 결에서 꽤나 벗어난 접근 전략이라 생각합니다!
 
-*But yes, linked lists are the defacto heroes of the dark world of lock-free
-concurrency.*
+*다만 맞습니다, 연결 리스트가 락 프리(lock-free) 동시성이 점철된 어둠의 세계 분야에서 데팩토 영웅의 역할을 하는 건 사실이니까요.*
 
 
 
 
-## Mumble mumble kernel embedded something something intrusive.
+## 커널 뭐시라카노, 임베디드 꿍얼어쩌구, 인트루시브가 어쨌다구.
 
-It's niche. You're talking about a situation where you're not even using
-your language's *runtime*. Is that not a red flag that you're doing something
-strange?
+틈새도 너무 깊은 심연의 틈새인걸요. 당신 목소리를 들으니 제가 익숙한 프로그래밍 세계의 *런타임* 에서조차 존재할 수 없는 세계 사람의 대화 같아요. 뭔가 잘못되어가고 있다는 적기(Red flag)를 못 느끼셨나요?
 
-It's also wildly unsafe.
+그리고 매우, 극히, 상당히 위험(Unsafe)합니다.
 
-*But sure. Build your awesome zero-allocation lists on the stack.*
+*하지만 역시나 맞습니다. 네 배포 환경 안에서 최고로 훌륭하고 화려한 0 바이트 추가할당 리스트를 스택 안에 잘 구현해 보세요.*
 
 
 
 
 
-## Iterators don't get invalidated by unrelated insertions/removals
+## 나중에 무언가를 집어넣거나 빼낼 때 기존 이터레이터가 손상되지 않잖아요
 
-That's a delicate dance you're playing. Especially if you don't have
-a garbage collector. I might argue that your control flow and ownership
-patterns are probably a bit too tangled, depending on the details.
+당신은 꽤 아슬아슬하게 줄을 타고 있군요. 특정한 가비지 컬렉터 (Garbage Collector)의 은총이 없다면요. 당신의 제어 구조와 소유권 흐름은 아마도 너무 얼기설기 꼬이고 이리저리 서로 의지하는 구조가 되어버렸을 지도 모른다고 감히 이야기하고 싶네요. 상황별 제원을 확인해봐야 알겠지만요.
 
-*But yes, you can do some really cool crazy stuff with cursors.*
+*하지만 맞습니다. 커서 (Cursors)를 사용하면 끝장나게 시크하고 크레이지한 무언가를 할 수 있긴 하죠.*
 
 
 
 
 
-## They're simple and great for teaching!
+## 아이고 연결 리스트 가르치기 딱 좋고 간결하잖아요!
 
-Well, yeah. You're reading a book dedicated to that premise.
-Well, singly-linked lists are pretty simple. Doubly-linked lists
-can get kinda gnarly, as we'll see.
+네, 그건 맞네요. 안 그래도 당신은 그 부분에 관해 쓰여진 이 책을 읽고 있는 참이니까 말이에요.
+단방향 리스트는 엄청 직관적입니다. 하지만 양방향 연결 리스트부터는 당신이 보게 될 것처럼 꽤 지저분하고, 끔찍하고, 괴기스러워 질 거에요.
 
 
 
 
-# Take a Breath
+# 숨 돌리기
 
-Ok. That's out of the way. Let's write a bajillion linked lists.
+자, 여기까지네요! 억울함 없이 할 말을 다 했으니 이제 다채로운 수십억 개의 연결 리스트를 만들어보러 가시지요!
 
-[On to the first chapter!](first.md)
+[첫 번째 챕터로 가볼까요!](first.md)
 
 
 [rust-std-list]: https://doc.rust-lang.org/std/collections/struct.LinkedList.html

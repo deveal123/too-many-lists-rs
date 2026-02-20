@@ -1,68 +1,31 @@
-# Arc
+# Arc 도구 (Arc)
 
-One reason to use an immutable linked list is to share data across threads.
-After all, shared mutable state is the root of all evil, and one way to solve
-that is to kill the *mutable* part forever.
+사실 우리가 굳이 이 수많은 제약을 안고 들어가는 불변 연결 리스트(immutable linked list) 따위를 찾아 나서는 아주 핵심적인 진정한 존재 이유 중 하나는, 바로 여러 갈래의 분산된 스레드(threads) 체계 속에서 이 데이터들을 마찰 없이 나눠 먹고 공유하기 위함입니다.
+결국 따지고 보면, '공유된 가변 상태(shared mutable state)' 라는 그 악의 혼종 자체가 컴퓨터 만악의 근원(root of all evil)이나 다름없으며, 이 끔찍한 사태에 종지부를 찍을 가장 완벽하고 극단적인 구원책 중 하나는 그 잘난 *가변(mutable)*이라는 뿌리 자체를 뼛속까지 박멸해 영원히 숨통을 끊어버리는(kill) 방법뿐이니까요.
 
-Except our list isn't thread-safe at all. In order to be thread-safe, we need
-to fiddle with reference counts *atomically*. Otherwise, two threads could
-try to increment the reference count, *and only one would happen*. Then the
-list could get freed too soon!
+다만 안타깝게도 지금 당장 우리가 만든 리스트 녀석은 안드로메다 수준으로 완벽하게 스레드-보안(thread-safe)과는 거리가 아주 멉니다. 진짜로 안심하고 스레드 안전성을 보장받으려면, 내부 백그라운드에서 은밀히 참조 횟수 카운터 눈금을 하나씩 올리고 내리는 그 아슬아슬한 작업 과정 자체가 우주가 쪼개져도 오차가 날 수 없는 *원자적(atomically)* 단위의 보호 속에 치러져야만 합니다. 만일 그 방어막이 안 둘러져 있다면, 두 개의 스레드가 미친 듯이 동시에 카운터를 하나 올리려고 덤벼들었을 때, *결과적으로 멍청하게 한 놈의 카운트만 인식되어 수치가 올라가는(only one would happen)* 비극적 대참사가 터질 수 있습니다. 운 나쁘면 리스트가 아직 절실히 필요한 상황임에도 불구하고 카운터 오차 때문에 녀석이 허망하게 너무 일찍 비명횡사(freed too soon) 할 수 있다는 뜻입니다!
 
-In order to get thread safety, we have to use *Arc*. Arc is completely identical
-to Rc except for the fact that reference counts are modified atomically. This
-has a bit of overhead if you don't need it, so Rust exposes both.
-All we need to do to make our list is replace every reference to Rc with
-`std::sync::Arc`. That's it. We're thread safe. Done!
+이 망할 스레드 안전성(thread safety)이란 허들을 뛰어넘고자 한다면, 우리는 피눈물을 머금고 *Arc*를 등판시켜야만 합니다. Arc는 아주 문자 그대로 완벽하리만치 모든 이목구비와 작동 원리가 Rc와 토씨 하나 안 틀리고 똑 닮은 도플갱어지만, 단 하나의 예외로 내부 참조 횟수 증감 조작이 우주 진리 수준의 안전한 기계 단위인 원자적(atomically)으로 이루어진다는 점만이 극명히 다릅니다. 이 철벽 방어막을 스윙하는 대가로 만에 하나 당신이 이 기능이 전혀 필요 없는 단일 스레드 작업에서 쓸 때조차 약간의 동작 과부하(overhead) 비용을 가불받게 됩니다, 그래서 합리적인 Rust 설계자들은 이 두 선택지를 각각 굳이 분리해 분양하여 제공하는 것입니다.
+여태껏 작성한 우리 리스트를 아주 거뜬하게 스레드 안전 덩어리로 개조 탈바꿈시키는 유일한 마법의 주문은 그저 코드 뭉치 내에 퍼져있는 낡은 Rc 꼬리표들을 싸그리 `std::sync::Arc` 부속으로 치환시켜 맞바꿔버리는 것뿐입니다. 진짜 그게 답니다 (That's it). 우리는 이제 불멸의 스레드 안전 구역에 진입했습니다. 참 쉽죠! (Done!)
 
-But this raises an interesting question: how do we *know* if a type is
-thread-safe or not? Can we accidentally mess up?
+하지만 여기서 굉장히 흥미롭고 묵직한 물음 하나가 뇌리를 스치고 지나갑니다: "근데 씨볼, 이 빌어먹을 타입 하나가 진짜로 스레드에 강인하게 굴러먹을 만큼 튼튼한(thread-safe) 놈인지 아닌지 우리가 도대체 *어찌 안답니까(how do we know)?* 만일 내가 코 잔뜩 마시고 졸면서 코딩하다가 재수 없이 실수로 한 줄 삑사리 나서 조지면 어쩝니까?"
 
-No! You can't mess up thread-safety in Rust!
+아뇨 걱정 마십쇼! Rust 생태계 안에서 여러분은 그깟 스레드 안전성 따위로 실수하고 싶어도 실수조차 할 수 없게 통제되어 있습니다! (You can't mess up thread-safety in Rust!)
 
-The reason this is the case is because Rust models thread-safety in a
-first-class way with two traits: `Send` and `Sync`.
+이토록 거만하고 오만한 확신이 도출될 수 있는 근간에는 바로 Rust 자체가 우월하게 스레드-안전성을 시스템의 아주 근본적 일등 시민(first-class) 개념 단계에서부터 뼈대로 설계해 엮어 놓았으며, 그 맹세를 통제 감시하는 두 겹의 성스러운 방패 트레이트인 `Send` 와 `Sync`를 보유하고 있기 때문입니다.
 
-A type is *Send* if it's safe to *move* to another thread. A type is *Sync* if
-it's safe to *share* between multiple threads. That is, if `T` is Sync, `&T` is
-Send. Safe in this case means it's impossible to cause *data races*, (not to
-be mistaken with the more general issue of *race conditions*).
+어떤 타입에 명예로운 *Send* 훈장이 수여되었다 함은 그 녀석을 안심하고 우편 소포 보내듯 다른 생판 스레드 공간 너머로 온전히 내팽개쳐 *이동(move)*시켜 버려도 안전하다는 증서입니다. 반면 *Sync* 훈장이 수여되었다 함은 그 녀석을 동시에 득달같이 수많은 다른 스레드 무리 사이에서 거칠게 *공유(share)*해 가리켜도 탈이 없다는 인증서입니다. 즉 이 말인 즉슨 사실상, `T` 타입 녀석 본체가 당당히 Sync 훈장 수여의 자격을 입증해 내기만 한다면 곧 자연스럽게 `&T` 역시 덩달아 꼽사리로 Send 권능 구조에 편승될 수 있다는 뜻입니다. 이 거룩한 교리 내에서 안전(Safe)하다의 의미란, 곧 절대로 끔찍한 *데이터 교착 레이스(data races)* 대폭발 참사만큼은 일어나는 게 불가능하다는 보증 수표입니다, (이걸 더 포괄적이고 넓은 범위인 단순히 *레이스 컨디션(race conditions)* 이라는 덜떨어진 범주와 결코 똑같은 거라고 오해 착각 마시길 당부드립니다). 
 
-These are marker traits, which is a fancy way of saying they're traits that
-provide absolutely no interface. You either *are* Send, or you aren't. It's just
-a property *other* APIs can require. If you aren't appropriately Send,
-then it's statically impossible to be sent to a different thread! Sweet!
+이 신성한 두 트레이트들은 일명 마커 트레이트(marker traits) 계급에 속합니다, 즉 이 말은 무언가 있어 보이게 꾸며 말했지만 사실 이 둘의 속을 열어 까보면 구현해야 할 인터페이스라곤 구멍 뚫린 백지 한 장(absolutely no interface) 없다는 요상한 뜻입니다. 당신은 오직 이 자격 심사에서 통과해 *가졌거나(are)* 혹은 *미달이거나(aren't)* 둘 중 하나일 뿐입니다. 이 녀석의 진짜 존재 의의는 그저 당신을 쓰려는 *나머지 외부 놈들(other APIs)*이 가혹한 통과 여부 성질표(property) 조건을 요구할 시 내밀어 보이는 면허증입니다. 따라서 만일 당신 녀석이 당당히 이 선발 Send 검문소 요건 명단 패스를 충족하지 못해버린 주제라면, 그 상태로 섣불리 밖의 딴 스레드 영토 바깥세상 너머로 당신을 휙 던져 밀어 보낼(sent to a different thread) 방도 자체가 정적으로 시스템 자체에서 완벽하게 거부 차단된다는 소리입니다! 개꿀이죠! (Sweet!)
 
-Send and Sync are also automatically derived traits based on whether you are
-totally composed of Send and Sync types. It's similar to how you can only
-implement Copy if you're only made of Copy types, but then we just go ahead
-and implement it automatically if you are.
+한 술 더 떠서 대놓고 말씀드리자면, 이 거룩한 Send와 Sync 마커 훈장들은 여러분 구조체의 뼛속 장기들을 파고들어 여러분 체내 장기 구조를 떠받치고 있는 꼬봉 구성원 타입들이 싹 다 단체로 하나도 빠짐없이 뼛속까지 Send이거나 Sync파 벌들로 구성되어(totally composed) 있는지의 잣대를 세워보고, 그렇다 판정되면 그냥 은밀히 자동 하사(automatically derived)해 수여해 버리는 어마어마한 서비스 정신을 갖추고 있습니다. 예전에 당신 피붙이 장기들이 전부 극우 Copy 교도 무리로 구성되어있을 때만 비로소 당신 역시 Copy 인증 딱지를 합법적으로 강령 복제 인가 발급 구현(implement it automatically) 해주는 것과 일맥상통하는 쏙 빼닮은 시스템 기조입니다.
 
-Almost every type is Send and Sync. Most types are Send because they totally
-own their data. Most types are Sync because the only way to share data across
-threads is to put them behind a shared reference, which makes them immutable!
+시중에 나도는 거의 절대다수의 온갖 모든 데이터 타입들은 이미 태생적으로 깡통 상태에서도 훌륭한 Send이자 Sync 시민들입니다. 대부분 놈들이 선천적 Send 시민 자격을 얻는 이치야 뭐, 사실 당연하게도 놈들은 태생적으로 자신들의 고유한 장기 데이터 알맹이들을 독재적으로 철저히 완전 장악(totally own) 쥐락펴락하고 있기 때문입니다. 반면 이 다수 놈들이 당당히 Sync 자격마저도 동시에 쿨하게 통과 거머쥐는 이치의 비밀은 꽤 재밌는데, 애초에 다른 망할 스레드 분가들 너머로 자신의 피사체 데이터를 공유 투척(share data)시킬 수 있는 유일한 숨구멍 배출구 수단 자체가, 녀석들을 완전히 철창인 공유 참조(shared reference) 너머 뒷방 신세로 고립 감금시켜 절대적으로 꼼짝달싹 불변(immutable) 미라 신세로 만들어버리는 길 하나뿐이기 때문입니다!
 
-However there are special types that violate these properties: those that have
-*interior mutability*. So far we've only really interacted with *inherited
-mutability* (AKA external mutability): the mutability of a value is inherited
-from the mutability of its container. That is, you can't just randomly mutate
-some field of a non-mutable value because you feel like it.
+허나 이 찬란히 빛나는 위대한 성역 교회의 대전제마저 불경하게 개무시하고 짓밟아 위반(violate these properties)하는 아주 미운 오리 새끼 특수 종자 집단들이 예외적으로 서식합니다: 바로 일명 *내부 가변성(interior mutability)* 이라는 아주 고약한 지병을 앓고 있는 타입 부류들입니다. 지금까지 우리가 줄곧 상대하며 경험해 왔던 흔하디 흔한 족속들은 언제나 *계승적 가변성(inherited mutability)* (또 다른 속칭인 외부 가변성(external mutability)으로 불림)의 울타리 안에 소속되어 자라온 온실의 화초들뿐이었습니다: 어떤 알맹이 내용물 데이터 가치(value)의 가변성 허용권 척도는 온전히 녀석을 겉에서 겹겹이 품고 싼 포장껍질 방패 용기(container)가 가변인지 불변인지의 외형 허가증을 고스란히 유전 받아 세습 물려받았단(inherited) 뜻이었습니다. 직설적으로 재해석하자면, 당신이 그날 기분 탓으로 짜증이 난다고 무작정 멀쩡히 잠긴 불변 용기(non-mutable value) 속에 들어간 어떤 불쌍한 필드 데이터 하나 골라 잡아서 함부로 난도질해 훼손 가변(mutate) 변형시켜 조작하려는 짓 따윈 어림 반 푼어치도 없이 개같이 차단당한다는 겁니다.
 
-Interior mutability types violate this: they let you mutate through a shared
-reference. There are two major classes of interior mutability: cells, which
-only work in a single-threaded context; and locks, which work in a
-multi-threaded context. For obvious reasons, cells are cheaper when you can
-use them. There's also atomics, which are primitives that act like a lock.
+내부 가변성(interior mutability) 이단 타입 족속들은 이 절대 불가침 법도를 대놓고 유린하며 뭉개버립니다 (violate this): 이 녀석들은 무려 엄격한 통제의 창살인 공유 참조(shared reference)라는 두꺼운 안경 장막 너머로도 아무렇지 않게 손을 뻗어 알맹이를 후벼 파 훼손 가변 조작(mutate through a shared reference)할 수 있는 정신 나간 지름길 해킹 루트 터널 면책 특권들을 마구잡이로 발급 남발해 버립니다. 이 극악의 내부 가변성 범죄 집단에는 대략 두 파벌의 거대한 조직이 군림합니다: 먼저 오직 자기 구역 안방인 외진 단일 스레드 동네(single-threaded context) 골목 안에서만 국지적으로 치졸하게 찌질대며 나대는 셀(cells) 조직 일진들과, 바깥 다중 스레드(multi-threaded context) 전쟁터 한복판에 튀어나와서도 무법자처럼 날뛰며 동작하는 본격적인 자물쇠(locks) 용역 거물 세력이 바로 그들입니다. 지극히 본능적이고 뻔한 이치(obvious reasons)에 따르자면, 당장 당신 환경에서 갖다 써먹을 수만 있다면야 용역 깡패인 locks 따위보단 차라리 동네 양아치 수준의 셀(cells)들을 굴리는 편이 훨씬 싸먹기 저렴(cheaper)하고 부담이 적습니다. 덤으로 굳이 짜투리 지식을 꼽자면 사실 좀 더 근본 원시 단계에 섞여서 lock과 비슷한 마인드로 활동하는 원자재 돌연변이(atomics)라는 종류들도 낑겨있긴 합니다.
 
-So what does all of this have to do with Rc and Arc? Well, they both use
-interior mutability for their *reference count*. Worse, this reference count
-is shared between every instance! Rc just uses a cell, which means it's not
-thread safe. Arc uses an atomic, which means it *is* thread safe. Of course,
-you can't magically make a type thread safe by putting it in Arc. Arc can only
-derive thread-safety like any other type.
+그래서 도대체 이 장황한 대하드라마 썰이 당최 지금 우리가 들여다보는 망할 Rc와 Arc 이놈들이랑 무슨 뼈 저린 연관 관계가 있답니까? 아, 사실 슬프게도 바로 얘네 두 놈 쌍둥이들 모두 자체 본체들이 돌아가는데 필수적인 밥그릇인 *참조 횟수 카운터 계기판(reference count)*을 주물럭 굴리기 위해 저 악명 높은 하수구 흑마술인 내부 가변성(interior mutability)을 남몰래 차용해 밀수입해 쓰고 있기 때문입니다! 더 치명적이고 환장할 노릇(Worse)은, 바로 그 빌어먹을 더러운 숫자기계 카운터 덩어리가 이 세상천지 모든 복제된 인스턴스 자아 파편들 간에 통신망처럼 하나로 이어져 공유(shared)된다는 개같은 현실이죠! 순진한 바보 형 Rc 녀석은 고작 동네 양아치 수준인 셀(cell) 조직 기술 하나만 쓱싹 업자한테 넘겨받아 차용해 발라놨기 때문에, 안심하고 광야 너머 다른 스레드 무대 바깥으로 던졌다간 총 맞아 뒤지기에 안전 불가(not thread safe) 상태입니다. 반면 독기 품은 동생 Arc 녀석은 살기 가득한 원자재(atomic) 무기를 내장 탑재해 떡칠했기 때문에, 당당히 전면전 스레드 무대에 서도 방탄 안전(thread safe) 상태라는 기적을 뽐내는 통제력을 행사합니다. 야, 물론 염치없이 뭣도 모르는 쓰레기 오물 타입 하나 대충 덤핑 던져 가져와선 Arc 구명조끼 입혔다고 짠 하고 무작정 완벽한 스레드 안전체라며 마법(magically make)을 날먹 부릴 수 있다는 망상은 접으시길 바랍니다. Arc 녀석도 어쩔 수 없이 그 내막 속껍질 구성 자체가 여타 다른 모든 구질구질한 일반 타입 떨거지들(any other type)의 규약처럼, 원래 알맹이 자체가 스레드 안전의 강령 조건을 스스로 완벽히 자립 만족 후 파생 증명해 지켜냈을(derive thread-safety) 시점에만 그 안전성을 보증 전이해 지켜낼 수 있는 한계 종속물일 뿐이니까요.
 
-I really really really don't want to get into the finer details of atomic
-memory models or non-derived Send implementations. Needless to say, as you get
-deeper into Rust's thread-safety story, stuff gets more complicated. As a
-high-level consumer, it all *just works* and you don't really need to think
-about it.
+전 진짜로 맹세컨대 정말, 정말, 정말로(really really really) 여러분 멱살을 잡고서라도 원자적 메모리 모델계(atomic memory models) 의 그 기저 나락 속에 판치는 그 심연의 구질구질하고 환각적인 모발 단위 미세 상세 파고들기(finer details)의 늪이나 억지 선언 기반의 논-어라이브 Send 파생 수작질 원로 논문까지 들쑤셔 파고들어 가는 짓거리만은 극구 사양하고 싶습니다. 굳이 잔소리를 더 해보자면 눈물겹게도, 무릇 당신이 이 심연의 구렁텅이 Rust 스레드-보안 무용담 스토리 우물 바닥에 파고 깊게 천착해 잠수해 들어갈수록(deeper), 그 속에 직면할 괴물들과 상황판 논리들은 켜켜이 당신 뇌를 도륙 낼 기세로 미칠 듯 배배 꼬이며 압살(more complicated)해 올 거라고 보장합니다만. 당신이 고공의 하늘 위에서 편히 놀고먹는 고수준 일반 소비층 백성 유저(high-level consumer)의 특권에 안주해 머무는 한, 그 모든 지독한 미세톱니 바퀴의 끔찍한 연쇄 진통들은 그냥 그늘 뒤편에서 마법같이 너무도 당연하게 *척척 알아서들 돌아갈(just works)* 테니, 당신은 정성 들여 골머리 썩이며 코일 단위로 걱정사서 고민(think about it)할 근심 따윈 1도 없습니다.

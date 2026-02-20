@@ -1,8 +1,8 @@
-# Filling In Random Bits
+# 임의의 비트 채워넣기 (Filling In Random Bits)
 
-Hey you said you wanted to be production-quality, didn't you? 
+저기요, 아까 상용(production-quality) 수준으로 깐깐하게 짜고 싶다고 하시지 않으셨나요?
 
-Here's some more random gunk to toss in to be a "good" collection:
+자, 여기 우리가 "진정한" 컬렉션으로 거듭나기 위해 짬통에 쑤셔 넣어야 할 잡다한 쓰레기(random gunk) 코드 뭉치들을 더 준비했습니다:
 
 ```rust ,ignore
 impl<T> LinkedList<T> {
@@ -17,7 +17,7 @@ impl<T> LinkedList<T> {
 }
 ```
 
-And now we've got a bunch of traits to implement that everyone expects:
+그리고 이제 사람들이 컬렉션이라면 으레 당연하게 지원하겠거니 기대(expects)하는 수많은 트레이트(traits)들도 마저 다 구현해 줘야 합니다:
 
 ```rust ,ignore
 impl<T> Default for LinkedList<T> {
@@ -92,15 +92,15 @@ impl<T: Hash> Hash for LinkedList<T> {
 }
 ```
 
-I definitely wrote all of these from scratch, and didn't just copy the std impls. Because they're so interesting, and I definitely remember the subtleties of manually implementing Hash. Yeah, that's something I think about All The Time...
+오해하지 마세요, 제가 저거 std 코드를 쏙 빼서 복붙(copy)한 게 아니라 쌩바닥부터(from scratch) 한 땀 한 땀 장인정신으로 다 쳐서 짠 겁니다. 왜냐고요? 존나 흥미진진하니까요! 그리고 전 이 Hash를 손수 노가다로 구현할 때마다 매번 그 오묘한 디테일(subtleties)을 잊지 않고 되새기곤 하거든요. 맞아요, 전 이딴 생각이나 하루 온종일 처하고 사는 병신입니다...
 
-Ok there's actually a few things worth noting here.
+오케이, 사실 여기서 짚고 넘어갈 만한 가치가 있는 포인트가 몇 개 있긴 합니다.
 
-First, a nasty namespace clash. For whatever reason std now has macros named Hash and Debug, and so if you don't have the traits imported, you'll get really cryptic errors about macros instead of the proper "missing trait".
+첫 번째, 끔찍한 네임스페이스 충돌(namespace clash)입니다. 도대체 무슨 바람이 불어서 매크로 이름 따위를 Hash랑 Debug로 지어놨는진 모르겠지만, 여하튼 std에 그런 이름의 매크로가 존재하기 때문에, 만약 여러분이 저 트레이트들을 명시적으로 import 해두지 않으면 "트레이트가 없습니다" 같은 정상적인 에러 대신 "여기에 매크로가 어쩌고저쩌고" 하는 개쌍욕 나오는 암호문(cryptic errors)을 보게 될 겁니다.
 
-The other intersting thing to talk about is Hash itself. Do you see how we hash in `len`? That's actually really important! If collections don't hash in lengths, [they can accidentally make themselves vulnerable to prefix collisions](https://doc.rust-lang.org/std/hash/trait.Hash.html#prefix-collisions). For instance, what distinguishes `["he", "llo"]` from `["hello"]`? If no one is hashing lengths or some other "separator", nothing! Making it too easy for hash collisions to accidentally or maliciously happen can result in serious sadness, so just do it!
+두 번째로 좀 더 흥미진진한 떡밥은 Hash 그 자체에 관한 겁니다. 방금 `len` 값도 같이 믹서기에 넣고 갈아버린(hash in) 거 눈치채셨나요? 저거 사실 존나게 중요한 디테일입니다! 만약 컬렉션을 해시할 때 길이를 빼먹으면, [재수 없게 접두사 충돌(prefix collisions)에 명치 세게 뚫리며 훅 갈 수(vulnerable) 있습니다](https://doc.rust-lang.org/std/hash/trait.Hash.html#prefix-collisions). 단적인 예로, `["he", "llo"]` 배열과 `["hello"]` 배열의 차이를 해시 함수가 어떻게 구별할까요? 아무도 길이값이나 그 외 다른 "구분자(separator)"를 해시에 섞어 넣지 않으면, 당연히 아무런 차이도 안 납니다(nothing)! 이딴 식으로 해시 충돌(hash collisions)이 우연히든 고의적이든(maliciously) 터지기 쉽도록 방치해 두면 나중에 피눈물 쏟는 끔찍한 비극(serious sadness)을 초래할 수 있습니다. 그러니까 묻지도 따지지도 말고 그냥 하라는 대로 하세요!
 
-Alright, here's our current code:
+자, 이리하여 우리의 현재 코드 명세입니다:
 
 ```rust
 use std::cmp::Ordering;

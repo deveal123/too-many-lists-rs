@@ -1,8 +1,8 @@
-# Testing Cursors
+# 커서 테스트하기 (Testing Cursors)
 
-Time to find out how many horribly embarassing mistakes I made in the previous section!
+자, 이제 이전 섹션에서 제가 얼마나 수치스럽고 끔찍한(horribly embarassing) 똥을 싸질러 놨는지 까발려 볼 시간입니다!
 
-Oh god we made our API unlike both std and the old impl. Alright well I'm just gonna hastily cobble together something from both of them. Yeah let's "borrow" these tests from std:
+아 맙소사, 우린 std 랑도 다르고 제 예전 구현체랑도 다르게 API를 완전히 마개조해 버렸잖아요. 뭐 알겠습니다, 일단 어떻게든 두 곳에서 조금씩 긁어모아다 급하게 누더기 기워보죠(hastily cobble together). 그래요, 겸사겸사 std에 있는 이 테스트 코드들부터 좀 "빌려와(borrow)" 봅시다:
 
 ```rust ,ignore
     #[test]
@@ -120,7 +120,7 @@ Oh god we made our API unlike both std and the old impl. Alright well I'm just g
     }
 ```
 
-Moment of truth!
+운명의 시간!(Moment of truth!)
 
 ```text
 cargo test
@@ -166,9 +166,9 @@ failures:
 test result: FAILED. 12 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-I'll admit, I had some hubris here and was hoping I nailed it. This is why we write tests (but maybe I just did a bad job of porting the tests..?).
+솔직히 말해서 참회하자면, 저 스스로 완벽하게(nailed it) 짰을 거라며 근자감(hubris)에 좀 심하게 쩔어 있었습니다. 뭐 이 맛에 테스트 코드 짜는 거 아니겠습니까 (아니면 그냥 제가 원래 있던 테스트를 복붙(porting)하면서 병신같이 옮겨 적었을 수도 있고요..?).
 
-What's the first failure?
+첫 번째 연쇄 추돌 사고(first failure) 원인이 뭐죠?
 
 ```rust ,ignore
 let mut m: LinkedList<u32> = LinkedList::new();
@@ -186,11 +186,11 @@ assert_eq!(cursor.current(), None);
 assert_eq!(cursor.peek_next(), Some(&mut 1)); // DIES HERE
 ```
 
-Geez I really messed up some basic functionality. Wait,
+이런 젠장, 진짜 생초보도 안 할 가장 기초적인 기능(basic functionality)부터 좆창내놨었네요. 잠깐만,
 
-> Head empty, Option methods and (omitted) compiler errors do all thinking now.
+> 머리 비우고 걍 타이핑 칩니다. Option 메서드들과 컴파일러가 알아서 쌍욕 박으며(omitted compiler errors) 토해내는 피드백들이 제 뇌를 대신해서 모든 걸 다 생각(all thinking) 해주고 있습니다.
 
-Well I am nothing if not honest.
+솔직히 제가 정직함(honest) 하나 빼면 시체이긴 합니다.
 
 ```rust ,ignore
 pub fn peek_next(&mut self) -> Option<&mut T> {
@@ -202,7 +202,7 @@ pub fn peek_next(&mut self) -> Option<&mut T> {
 }
 ```
 
-...Yeah this is just wrong. If `self.cur` is None, we aren't just supposed to give up, we need to check `self.list.front` too, because we're on the ghost! So we just need to add an or_else to the chain:
+...네 그냥 쌩으로 틀렸습니다. 만약 `self.cur`가 `None`이라면 걍 무식하게 포기할(give up) 게 아니라, 당연히 우리가 유령 위에 서 있다는 뜻이니까 `self.list.front`도 찔러봐야(check) 했건만! 걍 메서드 체이닝 끝자락에 `or_else` 하나만 스윽 끼워 넣으면 다 해결될 일입니다:
 
 ```rust ,ignore
 pub fn peek_next(&mut self) -> Option<&mut T> {
@@ -224,7 +224,7 @@ pub fn peek_prev(&mut self) -> Option<&mut T> {
 }
 ```
 
-Did that fix it?
+이걸로 고쳐졌으려나요?
 
 ```text
 ---- test::test_cursor_move_peek stdout ----
@@ -233,7 +233,7 @@ thread 'test::test_cursor_move_peek' panicked at 'assertion failed: `(left == ri
  right: `None`', src\lib.rs:1078:9
 ```
 
-Wait now it's wrong *further back*. Ok I need to stop head-emptying peek because apparently it's a lot harder than I was willing to give it credit for. Just trying to blindly chain these cases is a disaster, let's have a proper if for the cases of ghost vs not:
+아니 잠깐, 이번엔 아예 *더 앞에서부터(further back)* 터지잖아. 오케이 인정 반성합니다. 이제 `peek` 짤 땐 제발 뇌 빼고 치는 거 그만둬야겠습니다. 겉보기와 달리 이 녀석 제가 생각했던 것보다 훨씬 더 딥다크(lot harder)한 새끼였네요. 무지성으로 체이닝만 덕지덕지 이어 붙이는 건 걍 파멸로 가는 지름길(disaster)이니, 제대로 빡 각 잡고 유령일 경우와 아닐 경우를 `if` 문으로 갈라치기 해줍시다:
 
 ```rust ,ignore
 pub fn peek_next(&mut self) -> Option<&mut T> {
@@ -267,7 +267,7 @@ pub fn peek_prev(&mut self) -> Option<&mut T> {
 }
 ```
 
-Feelin' confident about this one!
+이번엔 진짜 삘이 오네요, 근자감 풀충전 완료!(Feelin' confident about this one!)
 
 ```text
 failures:
@@ -285,9 +285,9 @@ failures:
 test result: FAILED. 13 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-Yesss. Ok one more failure to go... oh.
+좋았어(Yesss). 자 이제 딱 하나만 더 잡으면... 어라.
 
-Did you notice the part where I commented out some code for testing remove_current? Yeah I wasn't paying attention to the fact that this test is stateful. Let's just create a new list with the state the remove_current part would have left us in:
+아까 제가 `remove_current` 기능 테스트하려고 짜둔 코드 주석 처리(commented out) 해버린 거 눈치채셨나요? 네, 이 망할 테스트 코드가 내부적으로 상태값을 유지하며 파멸로 치닫고 있는(stateful) 연쇄 구조란 걸 빡대가리처럼 놓치고 있었죠. 걍 미련 없이 `remove_current` 가 휩쓸고 지나간 파멸 후의 상태값으로 리스트를 뚝딱 새로 하나 창조해 줍시다:
 
 ```rust ,ignore
 let mut m: LinkedList<u32> = LinkedList::new();
@@ -326,7 +326,7 @@ test src\lib.rs - assert_properties::iter_mut_invariant (line 803) - compile fai
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
 ```
 
-Heyyyy look at thaaat... ok now I'm getting paranoid. Let's properly fill in check_links and test it under miri:
+오우예에에에에에 다 통과했죠오오... 자 이쯤 되니 오히려 이제 슬슬 피해망상(paranoid)이 도지기 시작하네요. 기왕 하는 거 꼼꼼하게 `check_links` 까지 마저 채워 넣고 Miri 검사관님 모셔다가 심판을 받아봅시다:
 
 ```rust ,ignore
 fn check_links<T: Eq + std::fmt::Debug>(list: &LinkedList<T>) {
@@ -338,7 +338,7 @@ fn check_links<T: Eq + std::fmt::Debug>(list: &LinkedList<T>) {
 }
 ```
 
-Is this the best way to do this? No. Is it fine? Yes.
+이게 진짜 최선의(best) 구현 방식입니까? 아뇨. 그래도 쓸만(fine) 합니까? 예쓰.
 
 ```text
 $env:MIRIFLAGS="-Zmiri-tag-raw-pointers"
@@ -373,17 +373,17 @@ test src\lib.rs - assert_properties::iter_mut_invariant (line 803) - compile fai
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
 ```
 
-DONE.
+완벽.(DONE.)
 
-Done.
+진짜 끝났습니다.(Done.)
 
-We did it. We made a god damn production-quality LinkedList, with basically all the same functionality as the one in std. Are we missing little convenience methods here and there? Absolutely. Will I add them into the final published version of the crate? Probably!
+우리가 해냈습니다 씨발. 우리가 마침내 std 구현체랑 비비는 깡패 같은 성능과 기본기를 두루 갖춘 상용(production-quality) LinkedList를 이 두 손으로 직접 빚어냈습니다. 중간중간 쓸데없는 자잘한 편의성 메서드(convenience methods)들을 꽤 빼먹긴 했지만요? 당연히 빼먹었죠 시발. 나중에 제가 이 크레이트를 직접 릴리스(published)할 날이 오면 마저 다듬어 넣을까요? 아마도 삘 꽂히면 그러겠죠!
 
-But, I am, So Very Tired.
+하지만, 전 지금, 말도 안 되게 개같이 지쳤습니다(So Very Tired).
 
-So. We win.
+어쨌든. 우리의 승리입니다.
 
-Wait fuck. We're being production quality. Ok one last final boss: clippy.
+아 잠깐 썅. 우리 상용(production quality) 퀄리티 지향한다 하지 않았음? 오케이 진짜 찐막 리얼 마지막 숨겨진 최종 보스: 클리피(clippy) 님 모시겠습니다.
 
 ```text
 cargo clippy
@@ -440,26 +440,26 @@ warning: `linked-list` (lib) generated 4 warnings
     Finished dev [unoptimized + debuginfo] target(s) in 0.29s
 ```
 
-Alright clippy, let's do this.
+자 들어오시죠 클리피 성님, 한 번 해봅시다.
 
-Complaint 1 (and 3): we use `while let Some(_) = ` instead of `while .is_some()`. The loop is empty so this truly doesn't matter but ok fine, clippy, I'll do things your way.
+불만 사항 1 (그리고 3): `while .is_some()` 놔두고 왜 굳이 `while let Some(_) = ` 같은 똥꼬쇼를 하냐는군요. 어차피 루프 속이 텅텅 비어서(empty) 진짜 단 1미리의 속도 차이도 안 나는 개뻘짓(doesn't matter)이긴 한데, 알겠습니다 쒸발, 클리피 성님이 하라면 성님 방식대로(your way) 기어야죠.
 
-Complaint 2: We have an actual inherent into_iter method. Wait, what *checks std* ok, point to clippy. IntoIterator is in the prelude (and basically a lang item) so, we don't need an inherent version too.
+불만 사항 2: 우리가 자체적으로(inherent) `into_iter` 메서드를 박아뒀다는군요. 아니 잠깐, 왜 뭐가 문젠.. *std 코드를 까본다* 아 오케이, 이번 건 클리피 성님 1점. `IntoIterator`는 근본 중의 근본 프렐류드(prelude) (사실상 언어 자체 내장품(lang item))에 박혀있기 때문에, 우리가 굳이 허세 부리며 자체 버전까지 쑤셔 넣을(inherent version too) 필욘 없죠.
 
-Complaint 4: we copied a weird cargocult from std. *shrug* fine I'll remove it.
+불만 사항 4: 우리가 std에서 이상한 카고컬트(cargocult) 버릇을 훔쳐 왔다는군요. *어깨 으쓱(shrug)* 알빠노 걍 지워줄게.
 
 ```text
 cargo clippy
     Finished dev [unoptimized + debuginfo] target(s) in 0.00s
 ```
 
-Nice. Just one last thing to do before calling it production quality: fmt.
+개꿀. 이제 "이거 진짜 상용 퀄임" 하고 자랑스럽게 떠벌리기 전에 딱 하나 남은 마지막 관문: `fmt` 타임입니다.
 
 ```text
 cargo fmt
 ```
 
-...yeah it added some newlines and removed some trailing whitespace. Nothing interesting.
+...예 뭐 알아서 줄 바꿈(newlines) 좀 스까주고 뒤쪽 잔여 공백(trailing whitespace) 찌끄레기들 좀 쓸어 담아 주네요. 노잼(Nothing interesting).
 
-**WE ARE NOW TRULY FINALLY DONE!!!!!!!!!!!!!!!!!!!!!**
+**드디어 진짜 리얼루다가 모든 게 끝났습니다!!!!!!!!!!!!!!!!!!!!!**
 

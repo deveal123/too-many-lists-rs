@@ -1,6 +1,6 @@
-# Final Code
+# 최종 코드 (Final Code)
 
-Alright, that's it for the second list; here's the final code!
+좋습니다, 두 번째 연결 리스트 챕터는 여기까지입니다; 대망의 최종 코드를 확인하시죠!
 
 ```rust
 pub struct List<T> {
@@ -74,7 +74,7 @@ pub struct IntoIter<T>(List<T>);
 impl<T> Iterator for IntoIter<T> {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
-        // access fields of a tuple struct numerically
+        // 튜플 구조체의 필드는 이렇게 숫자로 접근합니다
         self.0.pop()
     }
 }
@@ -116,27 +116,27 @@ mod test {
     fn basics() {
         let mut list = List::new();
 
-        // Check empty list behaves right
+        // 빈 리스트가 올바르게 작동하는지 확인
         assert_eq!(list.pop(), None);
 
-        // Populate list
+        // 리스트에 값 채워넣기
         list.push(1);
         list.push(2);
         list.push(3);
 
-        // Check normal removal
+        // 순서대로 잘 빠지는지 확인
         assert_eq!(list.pop(), Some(3));
         assert_eq!(list.pop(), Some(2));
 
-        // Push some more just to make sure nothing's corrupted
+        // 망가지진 않았는지 값 더 넣어보기
         list.push(4);
         list.push(5);
 
-        // Check normal removal
+        // 다시 순서대로 잘 빠지는지 확인
         assert_eq!(list.pop(), Some(5));
         assert_eq!(list.pop(), Some(4));
 
-        // Check exhaustion
+        // 바닥까지 완전히 다 뽑는지 확인
         assert_eq!(list.pop(), Some(1));
         assert_eq!(list.pop(), None);
     }
@@ -196,4 +196,4 @@ mod test {
 
 ```
 
-Getting beefier!
+슬슬 코드가 좀 두툼해지고 있네요! (Getting beefier!)

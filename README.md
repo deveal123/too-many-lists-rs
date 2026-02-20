@@ -1,3 +1,5 @@
+> This is a Korean translation and fork of the original [rust-unofficial/too-many-lists](https://github.com/rust-unofficial/too-many-lists) project.
+
 # Learn Rust by writing Entirely Too Many Linked Lists
 [![Build Status](https://travis-ci.org/rust-unofficial/too-many-lists.svg?branch=master)](https://travis-ci.org/rust-unofficial/too-many-lists)
 

@@ -1,26 +1,22 @@
-# New
+# 새로 만들기 (New)
 
-To associate actual code with a type, we use `impl` blocks:
+특정 타입과 실제 코드를 연관 짓기 위해 우리는 `impl` 블록을 사용합니다:
 
 ```rust ,ignore
 impl List {
-    // TODO, make code happen
+    // TODO, 코드가 여기서 실행되도록 만들기
 }
 ```
 
-Now we just need to figure out how to actually write code. In Rust we declare
-a function like so:
+이제 코드를 어떻게 작성할지 알아내기만 하면 됩니다. Rust에서 함수는 다음과 같이 선언합니다:
 
 ```rust ,ignore
 fn foo(arg1: Type1, arg2: Type2) -> ReturnType {
-    // body
+    // 함수 본문
 }
 ```
 
-The first thing we want is a way to *construct* a list. Since we hide the
-implementation details, we need to provide that as a function. The usual way
-to do that in Rust is to provide a static method, which is just a
-normal function inside an `impl`:
+우리가 가장 먼저 원하는 것은 리스트를 *생성(construct)*하는 방법입니다. 우리는 구현 세부 사항을 숨겼기 때문에 이 작업을 외부에서도 호출 가능한 함수로 제공해야 합니다. Rust에서 이를 수행하는 일반적인 방법은 정적 메서드(static method)를 제공하는 것인데, 이는 그저 `impl` 블록 내부에 있는 일반 함수일 뿐입니다:
 
 ```rust ,ignore
 impl List {
@@ -30,36 +26,9 @@ impl List {
 }
 ```
 
-A few notes on this:
+이에 대한 몇 가지 참고 사항:
 
-* Self is an alias for "that type I wrote at the top next to `impl`". Great for
-  not repeating yourself!
-* We create an instance of a struct in much the same way we declare it, except
-  instead of providing the types of its fields, we initialize them with values.
-* We refer to variants of an enum using `::`, which is the namespacing operator.
-* The last expression of a function is implicitly returned.
-  This makes simple functions a little neater. You can still use `return`
-  to return early like other C-like languages.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* `Self`는 "`impl` 키워드 바로 옆에 적었던 그 타입"을 의미하는 별칭(alias)입니다. 코드를 반복해서 쓰지 않게 해 주어 아주 유용하죠!
+* 구조체(struct)의 인스턴스를 생성하는 방법은 구조체를 선언할 때와 사실상 동일합니다. 단지 필드의 서술 타입을 적는 대신 초기화 할 구체적 값을 할당한다는 점만 다릅니다.
+* 우리는 네임스페이스 연산자인 `::`를 사용하여 열거형(enum)의 하위 요소(variant)를 참조합니다.
+* 함수의 마지막에 오는 표현식(expression)은 암묵적으로 그 즉시 반환(returned)됩니다. 이 덕분에 간단한 함수들을 훨씬 더 깔끔하게 짤 수 있습니다. (만약 다른 C 계열 언어들처럼 중간에 일찍 반환하고 싶다면 여전히 `return` 키워드를 쓸 수 있습니다.)

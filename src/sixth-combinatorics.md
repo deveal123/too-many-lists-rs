@@ -1,23 +1,23 @@
-# Boring Combinatorics
+# 지루한 조합론 (Boring Combinatorics)
 
-Ok, back to our regularly scheduled linked lists!
+좋습니다, 이제 늘 하던 대로 다시 연결 리스트로 돌아가 보죠!
 
-First let's knock out `Drop` which is trivial with pop:
+우선 `pop` 덕분에 거저먹기 수준이 된 `Drop`부터 후딱 해치웁시다:
 
 ```rust ,ignore
 impl<T> Drop for LinkedList<T> {
     fn drop(&mut self) {
-        // Pop until we have to stop
+        // 더 이상 뽑아낼 게 없을 때까지 모조리 Pop 합니다
         while let Some(_) = self.pop_front() { }
     }
 }
 ```
 
-We've got to fill in a bunch of really boring combinatoric implementations like front, front_mut, back, back_mut, iter, iter_mut, into_iter, ...
+우리는 이제부터 `front`, `front_mut`, `back`, `back_mut`, `iter`, `iter_mut`, `into_iter`, ... 등등 존나게 지루하고 뻔한 조합론적(combinatoric) 구현체들을 그야말로 산더미처럼 작성해 넣어야 합니다.
 
-You could do them with macros or whatever but honestly, that's a worse fate than copy-pasting. We're just going to do a lot of copy-pasting. I have *very carefully* crafted the previous push/pop implementations so that we should be able to *literally* just swap front and back and the code does/says the right thing! Hooray for painful experience! (It's so tempting to talk about "prev and next" for nodes, but I find it's really worth it to just consistently talk about "front" and "back" as much as possible to avoid mistakes.)
+물론 매크로(macros) 같은 걸 써서 뚝딱 처리해버릴 수도 있겠지만, 까놓고 말해서 그건 복사 붙여넣기 노가다보다도 훨씬 더 끔찍한 운명을 초래합니다. 우린 그냥 무식하게 복사 붙여넣기를 썩은 문둥이처럼 반복할 겁니다. 제가 아까 `push/pop`을 구현할 때 *아주 심혈을 기울여서* 짰기 때문에, 이제 우린 *글자 그대로(literally)* `front`와 `back` 단어만 서로 싹 스와핑해주면 코드가 알아서 찰떡같이 맞아떨어질 겁니다! 이 모든 게 뼈아픈 과거의 경험 덕분이죠 만세! (노드들을 가리킬 때 "이전(prev)"이나 "다음(next)" 같은 수식어를 쓰고 싶은 강렬한 충동이 들 때가 많지만, 제 경험상 웬만하면 무조건 "앞(front)"이랑 "뒤(back)"로만 일관되게 칭하는 게 실수를 줄이는 데 훨씬 이득입니다.)
 
-Alright, first up, `front`:
+자, 그럼 첫 번째 타자, `front`입니다:
 
 ```rust ,ignore
 pub fn front(&self) -> Option<&T> {
@@ -27,7 +27,7 @@ pub fn front(&self) -> Option<&T> {
 }
 ```
 
-Hey actually, this book is really old and some nice new things have been added like the `?` operator which does an early return on Option::None, does that make our code nicer?
+어 사실, 이 튜토리얼 책이 워낙 옛날에 쓰인 구석기 유물이라서 그동안 Rust에도 `Option::None`에서 일찍 반환(early return) 빵을 때려주는 `?` 연산자 같은 신문물이 많이 추가되었는데, 과연 이걸 쓰면 우리 코드가 좀 더 이쁘장해질까요?
 
 
 ```rust ,ignore
@@ -38,7 +38,7 @@ pub fn front(&self) -> Option<&T> {
 }
 ```
 
-Maybe? It's kind of a wash for something this simple, and the previous section was all about how early returns are kinda spooky for us, so maybe we should prefer being a bit more explicit here (I'm sticking to the `map` implementation).  On to front_mut:
+글쎄요? 이렇게 단순한 코드에선 차라리 썼다 안 썼다 별 차이도 없는 무승부(wash)에 가깝고, 게다가 바로 전 챕터에서 우리가 조기 반환 빔을 얼마나 호러 틱하게 무서워했는지 구구절절 써놨기 때문에, 여기선 차라리 묵묵하게 명시적으로 쑤셔 넣는 편을 택하겠습니다 (전 그냥 기존의 `map` 떡칠 구현을 유지할 겁니다). 다음 타자, `front_mut`:
 
 ```rust ,ignore
 pub fn front_mut(&mut self) -> Option<&mut T> {
@@ -48,15 +48,15 @@ pub fn front_mut(&mut self) -> Option<&mut T> {
 }
 ```
 
-I'll just dump all the `back` versions at the end. 
+나머지 찌꺼기 `back` 패밀리 버전들은 싹 다 맨 뒤쪽에 뭉치로 짬처리해두겠습니다.
 
-Next up, iterators. Unlike all of our previous lists we've *finally* unlocked the ability to do [DoubleEndedIterator](https://doc.rust-lang.org/std/iter/trait.DoubleEndedIterator.html), and if we're going for production quality we're gonna do [ExactSizeIterator](https://doc.rust-lang.org/std/iter/trait.ExactSizeIterator.html) too.
+다음 타석은 반복자(iterators)입니다. 지금까지 짰던 여타 허접 리스트들과는 달리, 우리는 드디어 마침내 [양방향 반복자(DoubleEndedIterator)](https://doc.rust-lang.org/std/iter/trait.DoubleEndedIterator.html)의 꿀맛을 볼 제한을 해제(unlocked)했습니다. 이왕 상용 프로덕션 퀄리티를 지향하는 김에 [정확한 크기 반복자(ExactSizeIterator)](https://doc.rust-lang.org/std/iter/trait.ExactSizeIterator.html)까지 깔쌈하게 구현해 보겠습니다.
 
-So in addition to `next` and `size_hint`, we're going to support `next_back` and `len`.
+그러니까 기존의 `next`랑 `size_hint`에 짬짜면으로 마저 얹어서, `next_back`이랑 `len`까지 추가로 지원해 줄 겁니다.
 
-The vigilant among you might notice that IterMut seems a lot more sketchy with double-ended iteration, but it's actually still sound!
+아마 눈썰미 쩌는 분들이라면 "어 잠깐만, IterMut 이 새끼 이거 양쪽에서 뜯어먹는 양방향 이터레이션 돌리면 존나 위험한 거 아니야?" 하고 의심의 눈초리를 보내실 수도 있겠지만, 놀랍게도 이건 완벽하게 안전(sound)합니다!
 
-... god this is gonna be a lot of boilerplate. Maybe I should really write a macro... no, no, that's still a worse fate.
+...아 씨바 이거 보일러플레이트(boilerplate) 찍어내는 꼬라지 보니까 토 나오네. 진짜로 매크로 짜야 하나... 아냐, 아냐, 그건 더 끔찍한 파멸로 가는 지름길이야.
 
 ```rust ,ignore
 pub struct Iter<'a, T> {
@@ -132,9 +132,9 @@ impl<'a, T> ExactSizeIterator for Iter<'a, T> {
 }
 ```
 
-...that's just `.iter()`...
+...방금 쓴 게 고작 `.iter()` 하나 분량입니다...
 
-we'll paste IterMut at the end, it's literally the exact same code with `mut` in a lot of places, let's just knock out `into_iter` first. We can mercifully still lean on our tried-and-true solution of just making it wrap our collection and using pop for next:
+`IterMut`은 무식하게 싹 다 복붙한다음 필요한 곳곳에 `mut`만 떡칠해서 대충 맨 끝바닥에 처박아 던져둘 거고, 우선 `into_iter`부터 후딱 치워버립시다. 너무나 다행스럽게도 얘는 그저 우리 컬렉션을 통째로 감싼 다음 `next` 부를 때마다 `pop`을 호출해서 뱉어주는, 뼈대 굵은 근본 해결책(tried-and-true solution)을 그대로 우려먹을 수 있습니다:
 
 ```rust ,ignore
 pub struct IntoIter<T> {
@@ -184,9 +184,9 @@ impl<T> ExactSizeIterator for IntoIter<T> {
 }
 ```
 
-Still a crapload of boiler plate, but at least it's *satisfying* boilerplate.
+여전히 토악질 나오는 보일러플레이트 덩어리긴 하지만, 그래도 적어도 이 녀석은 속이 편안해지는 *사이다(satisfying)* 보일러플레이트군요.
 
-Alright, here's all of our code with all the combinatorics filled in:
+자, 이리하여 모든 빌어먹을 조합론 찍어내기가 끝난 최종 전체 코드 명세입니다:
 
 ```rust
 use std::ptr::NonNull;

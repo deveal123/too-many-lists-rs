@@ -1,13 +1,9 @@
-# Drop
+# 줍고 버리기 (Drop)
 
-We can make a stack, push on to, pop off it, and we've even tested that it all
-works right!
+우리는 이제 스택을 하나 잘 만들어 냈고, 거기다가 값을 집어넣고(push), 다시 빼낼(pop) 수도 있게 되었으며, 심지어 이 모든 것들이 완벽하게 동작하는지 테스트 과정까지 성공적으로 모두 거쳤습니다!
 
-Do we need to worry about cleaning up our list? Technically, no, not at all!
-Like C++, Rust uses destructors to automatically clean up resources when they're
-done with. A type has a destructor if it implements a *trait* called Drop.
-Traits are Rust's fancy term for interfaces. The Drop trait has the following
-interface:
+그럼 이제부터는 우리가 썼던 다 쓴 리스트를 어떻게 치우고 청소할지 고민해봐야 할까요? 엄밀히 따지자면, 아니요, 전혀 그럴 필요 없습니다!
+C++과 마찬가지로, Rust 역시 할 일이 끝난 자원들을 알아서 자동으로 쓱싹 정리(clean up)해주는 소멸자(destructors) 메커니즘을 사용합니다. 어떤 타입이든 만일 자신이 Drop이라는 이름의 *트레이트(trait)*를 구현(implement)해두기만 하면, 자동적으로 소멸자를 가지게 됩니다. 여기서 트레이트(Traits)란 Rust 생태계에서 인터페이스(interfaces)를 멋들어지게 부르는 용어입니다. 이 Drop 트레이트는 다음과 같은 형태의 인터페이스 구성을 취하고 있습니다:
 
 ```rust ,ignore
 pub trait Drop {
@@ -15,49 +11,40 @@ pub trait Drop {
 }
 ```
 
-Basically, "when you go out of scope, I'll give you a second to clean up your
-affairs".
+기본적으로 "네가 스코프를 벗어나 운명을 다할 때쯤, 내가 네 주변을 스스로 정리할 수 있도록 딱 한 번 1초의 최후의 유언 시간을 줄게"라는 뜻입니다.
 
-You don't actually need to implement Drop if you contain types that implement
-Drop, and all you'd want to do is call *their* destructors. In the case of
-List, all it would want to do is drop its head, which in turn would *maybe*
-try to drop a `Box<Node>`. All that's handled for us automatically... with one
-hitch.
+사실상 여러분이 포함하고 있는 내부 타입들이 이미 이 Drop 트레이트를 잘 구현하고 있고, 여러분이 원했던 것이 그저 자신의 차례가 되었을 때 *그들의* 소멸자를 얌전히 연쇄적으로 호출해주기만 하는 것이 전부라면, 굳이 여러분이 직접 나서서 이 Drop을 명시적으로 구현해 줄 필요조차 없습니다. 
+우리 List의 경우를 놓고 보자면, 녀석이 죽기 전 최후에 바라는 것이라곤 그저 자신의 머리통(head)을 무사히 떨궈버리는(drop) 일일 텐데, 이 과정은 결과적으로 꼬리에 꼬리를 물고 `Box<Node>`를 쥐어짜 내어 drop 하려는 시도로 연쇄 폭발을 일으킵니다. 이 모든 소멸 체인이 기특하게도 모조리 우리 대신 자동으로 처리됩니다... 딱 한 가지 사소한 골칫거리 하나만 빼고요.
 
-The automatic handling is going to be bad.
+그 자동화된 처리 과정은 실로 최악의 재앙이 될 예정입니다.
 
-Let's consider a simple list:
+간단하게 요약된 리스트 구조를 하나 상상해 봅시다:
 
 
 ```text
 list -> A -> B -> C
 ```
 
-When `list` gets dropped, it will try to drop A, which will try to drop B,
-which will try to drop C. Some of you might rightly be getting nervous. This is
-recursive code, and recursive code can blow the stack!
+저 `list` 변수 자체가 스코프를 벗어나 스스로 drop 될 때, 녀석은 연쇄적으로 A를 drop 시키려 발악할 것이고, A는 다시 B를, B는 다시 C를 drop 하려고 서로가 서로의 목을 조를 것입니다. 여기서 눈치 빠른 몇몇 분들은 정당하게도 등골이 오싹해지며 식은땀을 흘리고 계실 겁니다. 이건 명백히 재귀적(recursive) 연쇄 호출 공격 코드이며, 끝을 알 수 없이 깊은 재귀 코드는 결국 스택 영역을 한계치까지 집어삼켜 터뜨려(blow the stack) 버릴 수 있으니까요!
 
-Some of you might be thinking "this is clearly tail recursive, and any decent
-language would ensure that such code wouldn't blow the stack". This is, in fact,
-incorrect! To see why, let's try to write what the compiler has to do, by
-manually implementing Drop for our List as the compiler would:
+어떤 분들은 속으로 "이건 명백히 꼬리 재귀(tail recursive) 형태잖아, 제대로 정규 교육을 받은 번듯한 프로그래밍 언어라면 당연히 이런 수준의 코드가 스택을 날려 먹지 않게끔 안전하게 방어벽 최적화를 마련해 뒀겠지"라고 굳게 믿고 계실지도 모릅니다. 유감스럽게도, 그건 완벽한 착각이며 정답은 "틀렸습니다!"입니다. 이게 도대체 어째서 안 되는지 그 기저의 진실을 확인해 보기 위해 직접 컴파일러의 뇌가 되어 우리 List의 Drop 역할을 수동으로 똑같이 하드코딩 흉내 내서 짜보도록 합시다:
 
 
 ```rust ,ignore
 impl Drop for List {
     fn drop(&mut self) {
-        // NOTE: you can't actually explicitly call `drop` in real Rust code;
-        // we're pretending to be the compiler!
-        self.head.drop(); // tail recursive - good!
+        // 참고(NOTE): 실제 Rust 코드에선 이렇게 명시적으로 `drop`을 강제 호출하는 짓거린 절대 용납되지 않습니다;
+        // 이건 그냥 빙의해서 우리가 컴파일러인 척 잠시 연기해 보는 것뿐입니다!
+        self.head.drop(); // 꼬리 재귀(tail recursive) 형태가 맞네요 - 여긴 아주 훌륭합니다!
     }
 }
 
 impl Drop for Link {
     fn drop(&mut self) {
         match *self {
-            Link::Empty => {} // Done!
+            Link::Empty => {} // 끝!
             Link::More(ref mut boxed_node) => {
-                boxed_node.drop(); // tail recursive - good!
+                boxed_node.drop(); // 음 꼬리 재귀(tail recursive)군요 - 여기도 아주 훌륭합니다!
             }
         }
     }
@@ -65,7 +52,7 @@ impl Drop for Link {
 
 impl Drop for Box<Node> {
     fn drop(&mut self) {
-        self.ptr.drop(); // uh oh, not tail recursive!
+        self.ptr.drop(); // 아뿔싸, 여긴 꼬리 재귀가 아니네요!
         deallocate(self.ptr);
     }
 }
@@ -77,21 +64,20 @@ impl Drop for Node {
 }
 ```
 
-We *can't* drop the contents of the Box *after* deallocating, so there's no
-way to drop in a tail-recursive manner! Instead we're going to have to manually
-write an iterative drop for `List` that hoists nodes out of their boxes.
+안타깝게도 우리는 힙에 등록된 Box의 메모리 할당을 영원히 해제(deallocating) 해버린 *이후(after)* 시점에는 절대로! Box 안 내용물 녀석에게 drop을 명령해 달랠 수 *없습니다*. 즉 결론은 이 녀석에게 꼬리 재귀(tail-recursive) 방식 따위로 안전하게 순차 drop을 수행할 마땅한 방도는 아예 존재조차 하지 않는다는 소소한 절망입니다!
+그 대신, 우리는 눈물을 머금고 수동으로 반복문(iterative) 기반의 우회 drop 로직을 `List` 위에 친히 집필하여 갇혀있는 불쌍한 노드 덩어리들을 그들의 Box라는 관짝 속에서 질질 끌어올려 꺼내주는 작업을 손수 수행해야만 합니다.
 
 
 ```rust ,ignore
 impl Drop for List {
     fn drop(&mut self) {
         let mut cur_link = mem::replace(&mut self.head, Link::Empty);
-        // `while let` == "do this thing until this pattern doesn't match"
+        // `while let` 동작 원리 == "이 패턴이 더 이상 맞물리지 않고 어긋날 때까지 평생 이 짓거리를 무한 반복해라"
         while let Link::More(mut boxed_node) = cur_link {
             cur_link = mem::replace(&mut boxed_node.next, Link::Empty);
-            // boxed_node goes out of scope and gets dropped here;
-            // but its Node's `next` field has been set to Link::Empty
-            // so no unbounded recursion occurs.
+            // boxed_node 변수는 이 지점에서 수명을 다하고 스코프를 벗어나며 무사히 잔혹하게 버려집니다(dropped);
+            // 하지만 그 이전에 이미 그것에 귀속된 Node의 `next` 탐욕 필드는 무해한 Link::Empty 상태로 교체 이식되었기 때문에
+            // 무한 증식하는 통제불능 끝없는 재귀의 연쇄 폭발 지옥이 발생하는 것을 원천 봉쇄해 냅니다.
         }
     }
 }
@@ -109,25 +95,26 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured
 
 ```
 
-Great!
+대단해라! 기가 막합니다!
 
 ----------------------
 
 <span style="float:left">![Bonus](img/profbee.gif)</span>
 
-## Bonus Section For Premature Optimization!
+## 조급한 성능 최적화 중독자들을 위한 서프라이즈 보너스 코너!
 
-Our implementation of drop is actually *very* similar to
-`while let Some(_) = self.pop() { }`, which is certainly simpler. How is
-it different, and what performance issues could result from it once we start
-generalizing our list to store things other than integers?
+방금 우리가 낑낑대며 작성한 구질구질한 drop 강제 집행부 구현 방식은 사실 `while let Some(_) = self.pop() { }` 이라고 작성한 코드와 *극단적으로 엄청나게* 똑 닮아 있으며, 후자가 머리로 이해하기도 의심의 여지 없이 백배는 더 간단명료합니다. 
+도대체 이 두 방식 사이에 무슨 결정적인 차이가 있으며, 훗날 우리가 정수 나부랭이를 넘어 더욱 육중한 무언가를 품는 불특정 제네릭 리스트 모델로 탈바꿈할 무렵엔 과연 저 간단해 보이던 후자 방식으로부터 어떠한 가공할 지옥의 성능 이슈 폭탄이 고개를 치켜들 우려가 생길까요?
 
 <details>
-  <summary>Click to expand for answer</summary>
+  <summary>정답이 궁금하시다면 여기를 쿡 찔러 펴보세요</summary>
 
-Pop returns `Option<i32>`, while our implementation only manipulates Links (`Box<Node>`). So our implementation only moves around pointers to nodes, while the pop-based one will move around the values we stored in nodes. This could be very expensive if we generalize our list and someone uses it to store instances of VeryBigThingWithADropImpl (VBTWADI). Box is able to run the drop implementation of its contents in-place, so it doesn't suffer from this issue. Since VBTWADI is *exactly* the kind of thing that actually makes using a linked-list desirable over an array, behaving poorly on this case would be a bit of a disappointment.
+단순 명료하지만 잔혹한 `Pop` 메서드는 `Option<i32>` 값 덩어리를 송두리째 반환하는 반면, 우리가 직접 구질구질하게 통제한 우리의 수동 구현체는 오직 링크 포인터 덩어리인 `Link` (`Box<Node>`) 껍데기만을 야금야금 다방면으로 주무른다는 엄청난 차이가 벌어집니다. 고로 우리의 독자적 구현체는 노드를 가리키는 껍질 포인터 나부랭이들만 사부작사부작 솜털처럼 이동시키며 정리 정돈을 끝내는 반면, 무시무시한 pop 기반의 파쇄 방식은 우리가 노드 내장 깊숙이 보관해 두었던 원래의 무거운 진귀한 가치 덩어리를 억지로 매번 스크래치 내면서 이리저리 무자비하게 밖으로 유출(move around)시켜버리는 끔찍한 짓을 반복하게 될 것입니다. 
 
-If you wish to have the best of both implementations, you could add a new method,
-`fn pop_node(&mut self) -> Link`, from-which `pop` and `drop` can both be cleanly derived.
+만일 우리가 리스트 구조를 일반화(generalize)한 뒤, 어떤 누군가가 이 녀석을 가져다가 몹시 무거운 소멸자를 품은 집채만 한 초대형 우주선 객체(VeryBigThingWithADropImpl, 줄여서 VBTWADI) 뭉텅이를 여기에 꾹꾹 눌러 담아 쓰려 했다면 이것은 상상 초월하는 어마어마한 성능 대가를 치르는 재앙이 초래될 것입니다. 감사하게도 Box 자체의 권능은 본인이 잉태하고 있는 내부 내용물의 고유 drop 소멸자 구현 로직을 제자리에서 곧바로(in-place) 자폭 구동시켜줄 수 있는 능력을 지니고 있기에, 우리의 수동 포인터 기반 구현체는 이런 무자비한 유출 재앙의 문제점 구덩이에 빠지지 않는 위엄을 과시하게 됩니다. 
+
+당초 저 집채만 한 우주선(VBTWADI)을 그깟 배열을 집어치우고 굳이 이 미천한 연결 리스트 기반으로 수납해 굴리기로 야심 차게 마음먹었다는 그 절박한 결정 자체가, 곧 저 무거운 객체 이동 비용을 필사적으로 피하고자 한 발버둥과 *천 퍼센트 완벽하게* 부합하는 핏의 선택 동기부여 요소였을 텐데 정작 파쇄 정리 과정에서 버벅대며 몹쓸 역행 성능을 과시한다는 건 실망감을 넘어서 절망스러운 기만이 될 테니까요.
+
+만일 여러분 욕심이 커서 두 세계의 최고 장점만을 오묘하게 하나로 취합해 완벽한 하이브리드 메서드를 만들고 싶으시다면, `fn pop_node(&mut self) -> Link` 라는 독자적인 새 돌연변이 메서드 하나를 별도로 추가 투입하여 그곳에서부터 `pop`과 `drop` 모두를 깔끔하고 우아하게 추출 연성해 내는 방식으로 아름답게 우회할 수도 있겠습니다.
 
 </details>

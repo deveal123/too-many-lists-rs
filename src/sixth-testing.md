@@ -1,6 +1,6 @@
-# Testing
+# 테스트 (Testing)
 
-Alright I put off testing for a while because well, we both know that we're now masters of Rust and we don't make mistakes anymore! Also just, this is a rewrite of an old crate, so I just have all the tests already. They're tests, you've seen tests a lot already. Here they are:
+좋습니다. 제가 지금까지 테스트 작성을 미루고 또 미뤘던 이유는, 뭐, 우리 둘 다 우리가 이제 Rust 마스터 경지에 올랐으며 더 이상은 그 어떤 실수도 저지르지 않으리란 걸 너무나 잘 알고 있기 때문이잖아요! 게다가 이건 그저 옛날 크레이트 하나를 재작성하는 것뿐이라서, 저는 이미 테스트 코드 뭉치들을 몽땅 다 갖고 있습니다. 그냥 테스트일 뿐이고, 여러분은 여태껏 지겹도록 테스트들을 구경해 왔습니다. 여기 대령했습니다:
 
 ```rust ,ignore
 #[cfg(test)]
@@ -276,7 +276,7 @@ mod test {
 }
 ```
 
-And now for the moments of truth:
+이제 대망의 진실의 시간입니다:
 
 ```text
 cargo test
@@ -326,6 +326,6 @@ test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
 
 😭
 
-We did it, we actually didn't screw up. This isn't a trick! All of our practice and training was finally worth it, we've finally written *good code*!!!
+우리가 해냈습니다, 진짜로 아무것도 안 망쳤어요! 이거 트릭 아닙니다! 우리의 모든 연습과 수련이 마침내 빛을 발했습니다, 우리가 드디어 *완벽한 코드(good code)*를 짜냈어요!!!
 
-Now with all that gunk out of the way, we can get back to the Interesting Stuff!
+자, 이제 이 모든 더럽고 지루한 똥 치우기 찌꺼기(gunk)들을 다 치워버렸으니, 다시 진짜 흥미진진한 파트(Interesting Stuff)로 돌아갈 수 있겠군요!

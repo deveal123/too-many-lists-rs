@@ -1,45 +1,26 @@
-# Ownership 101
+# 소유권 기초 (Ownership 101)
 
-Now that we can construct a list, it'd be nice to be able to *do* something
-with it. We do that with "normal" (non-static) methods. Methods are a special
-case of function in Rust because of  the `self` argument, which doesn't have
-a declared type:
+이제 리스트를 생성할 수 있게 되었으니, 이것을 가지고 무언가 쓸모있는 *작업*도 할 수 있다면 아주 좋겠습니다. 이를 위해 우리는 (정적이 아닌) "일반적인" 메서드를 사용합니다. 메서드는 Rust에서 선언된 타입이 따로 없는 `self` 인자 덕분에 일반 함수와는 분리된 상당히 특별한 위치를 차지합니다:
 
 ```rust ,ignore
 fn foo(self, arg2: Type2) -> ReturnType {
-    // body
+    // 함수 본문
 }
 ```
 
-There are 3 primary forms that self can take: `self`, `&mut self`, and `&self`.
-These 3 forms represent the three primary forms of ownership in Rust:
+여기서 `self`가 취할 수 있는 세 가지 주요 형태는 다음과 같습니다: `self`, `&mut self`, 그리고 `&self`입니다.
+이 세 가지 형태는 Rust의 소유권(ownership)이 갖는 세 가지 주요 패러다임을 대변합니다:
 
-* `self` - Value
-* `&mut self` - mutable reference
-* `&self` - shared reference
+* `self` - 값 (Value)
+* `&mut self` - 가변 참조자 (mutable reference)
+* `&self` - 공유 참조자 (shared reference)
 
-A value represents *true* ownership. You can do whatever you want with a value:
-move it, destroy it, mutate it, or loan it out via a reference. When you pass
-something by value, it's *moved* to the new location. The new location now
-owns the value, and the old location can no longer access it. For this reason
-most methods don't want `self` -- it would be pretty lame if trying to work with
-a list made it go away!
+값(Value)은 *진정한* 소유권을 나타냅니다. 여러분은 이 값으로 원하는 그 어느 것이든 내키는 대로 할 수 있습니다: 다른 곳으로 완전히 이동(move)시키거나, 소멸(destroy)시키거나, 내부 데이터를 완전히 변경(mutate)하거나, 아니면 참조자(reference)를 통해 잠시 임대(loan)해 줄 수도 있습니다. 
+무언가를 값으로 전달하면 해당 값은 통째로 새로운 위치로 *이동(moved)* 됩니다. 이제 값이 도착한 새로운 위치가 온전히 새로운 소유권을 취득하며 이전 위치에서는 더 이상 그 값에 추호도 접근할 수 없습니다. 이것이 대부분의 메서드가 `self` 형태로 인자를 받길 거부하는 주된 이유입니다 — 겨우 리스트를 통해 메서드 작업 한 번 호출하려 했더니 리스트 변수 자체가 연기처럼 저 멀리 증발해 버린다면 이건 정말 웃기지도 않는 일이겠죠!
 
-A mutable reference represents temporary *exclusive access* to a value that you
-don't own. You're allowed to do absolutely anything you want to a value you
-have a mutable reference to as long you leave it in a valid state when you're
-done (it would be rude to the owner otherwise!). This means you can actually completely
-overwrite the value. A really useful special case of this is *swapping* a value
-out for another, which we'll be using a lot. The only thing you can't do with an
-`&mut` is move the value out with no replacement. `&mut self` is great for
-methods that want to mutate `self`.
+가변 참조자(Mutable reference)는 본인 소유가 아닌 값에 대한 임시적이고 *독점적인 접근 권한(exclusive access)*을 가지고 있음을 의미합니다. 가변 참조자를 가진 값에 대해서는, 작업이 전부 끝났을 후 안전하게 유효한 상태로만 다시 원상태로 되돌려 놓는다는 전제만 확립된다면 정말 극단적으로 어떤 파격적인 일이든 서슴없이 수행해도 상관 없습니다 (그렇지 않고 함부로 던져 박살내 버리면 원래 소유자에 대한 엄청난 예의가 없는 거니까요!). 즉, 여러분은 해당 값 내부의 데이터를 완전히 산산조각 낸 후 덮어써도(overwrite) 아무렇지 않다는 뜻이기도 합니다. 이를 유용하게 활용하는 극찬받는 모범 답안 중 하나가 바로 어떤 값을 다른 값과 통째로 교체(swapping)하는 작업인데, 앞으로 우리는 이 스왑(swapping) 기법을 정말 골수까지 빨아먹을 정도로 지독히 자주 사용할 것입니다. 
+따라서 여러분이 가변 참조자(`&mut`)를 통해서 절대로 유일하게 할 수 없는 행위라면 오직 '아무런 값 대체도 없이 그 값을 냅다 아무렇게나 밖으로 집어던져버리는 행동(move out)' 단 하나뿐입니다. 그래서 `&mut self`는 값을 수정하기 원하는 메서드에 가장 완벽한 핏을 선보입니다.
 
-A shared reference represents temporary *shared access* to a value that you
-don't own. Because you have shared access, you're generally not allowed to
-mutate anything. Think of `&` as putting the value out on display in a museum.
-`&` is great for methods that only want to observe `self`.
+공유 참조자(Shared reference)는 본인이 소유하지도 않을 뿐더러 혼자만 가지지도 않은 임시적인 *공유 접근 권한(shared access)*만을 의미합니다. 접근 권리가 다른 여러 참조자들과 동시에 공유되고 있기 때문에, 필연적으로 여러분은 이 데이터의 그 어느 것도 멋대로 가변시킬 자유가 없습니다. `&` 모델을 박물관 유리를 통해 멀찍이서 바라보기만 할 뿐인 다수를 위한 전시품 모형이라고 생각하시면 이해가 직관적일 것입니다. 그렇기에 `&self`는 오직 `self`를 관측(observe)하기만 하는 메서드 쪽에 훨씬 더 적합합니다.
 
-Later we'll see that the rule about mutation can be bypassed in certain cases.
-This is why shared references aren't called *immutable* references. Really,
-mutable references could be called *unique* references, but we've found that
-relating ownership to mutability gives the right intuition 99% of the time.
+나중에 우리는 이런 절대적일 것 같은 가변성 제한 규칙조차 때에 따라선 교묘히 우회할 수 도 있다는 놀라운 사실도 목도하게 될 것입니다. 이것이야말로 공유 참조자가 굳이 *불변(immutable)* 참조자로 불리지 않는 진짜 이유입니다. 사실 가변 참조자를 *고유(unique)* 참조자로 불러볼 수도 있겠지만, 어쨌든 Rust 생태계에서는 소유권과 가변성을 일맥상통하여 연관 지어 생각하는 것이 99%의 프로그래머 상황에서 제일 직관적이고 납득하기 쉬운 훌륭한 길잡이라는 강렬한 공감대가 형성되었습니다.

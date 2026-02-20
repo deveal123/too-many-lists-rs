@@ -1,22 +1,14 @@
-# Final Code
+# 최종 코드 (Final Code)
 
-Alright, so that's implementing a 100% safe doubly-linked list in Rust. It was
-a nightmare to implement, leaks implementation details, and doesn't support several
-fundamental operations.
+좋습니다, 이렇게 Rust에서 100% 안전한(safe) 양방향 연결 리스트(doubly-linked list)를 구현해 보았습니다. 정말 구현 과정은 악몽(nightmare) 같았고, 구현 세부 사항이 밖으로 다 새어나가며, 몇몇 핵심적이고 기본적인 연산들조차 원천적으로 지원하지 못하는 끔찍한 결과물이었죠.
 
-But, it exists.
+하지만 어쨌든, 만들어내긴 했습니다(it exists).
 
-Oh, I guess it's also riddled with tons of "unnecessary" runtime checks for
-correctness between `Rc` and `RefCell`. I put unnecessary in quotes because
-they're actually necessary to guarantee the whole *actually being safe* thing.
-We encountered a few places where those checks actually *were* necessary.
-Doubly-linked lists have a horribly tangled aliasing and ownership story!
+아, 그리고 덤으로 `Rc`와 `RefCell` 사이에서 정확성을 강제하기 위한 "쓸모없는(unnecessary)" 런타임 검사들이 온 사방에 덕지덕지 수없이 누더기처럼 도배되어 있기도 하네요. 여기서 "쓸모없는"이라는 단어에 굳이 따옴표를 친 이유는 제 딴엔 저게 결국 *'진짜로 안전하다(actually being safe)'* 라는 그 거창한 대의명분을 끝까지 사수 보장하기 위해선 실제로 무조건 필수불가결(necessary)했기 때문입니다. 우린 심지어 그 망할 검사들이 실제로 꼭 필요했던 치명적인 위기 사태들을 몇 번 겪기도 했었죠. 양방향 연결 리스트라는 녀석은 정말이지 끔찍하게 얽히고설킨 더러운 앨리어싱(aliasing)과 소유권(ownership) 뒷얘기를 지닌 생태계입니다!
 
-Still, it's a thing we can do. Especially if we don't care about exposing
-internal data structures to our consumers.
+그래도 여전히, 우리가 맘만 먹으면 만들어 낼 순 있는 물건(thing we can do)입니다. 특히 내부 데이터 구조를 소비자들에게 노출시키는 것에 대해 전혀 신경 쓰지 않는다면 말이죠.
 
-From here on out, we're going to be focusing on other side of this coin:
-getting back all the control by making our implementation *unsafe*.
+이제 지금 이 순간부터 이어질 다음 챕터들에서는 바로 이 동전의 완전 반대편 뒷면, 즉 우리의 구현체를 다시금 아예 *안전하지 않게(unsafe)* 내동댕이침으로써, 그동안 빼앗기고 내준 모든 통제권 구조 통치권을 다시 몽땅 완벽하게 쟁취해 되찾아오는(getting back all the control) 어둠의 설계 과정에 온 정신을 몰두 집중해 볼 겁니다.
 
 ```rust
 use std::rc::Rc;
