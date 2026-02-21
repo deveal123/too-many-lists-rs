@@ -54,17 +54,17 @@
 
 * 뭔가 삽입되기 전까진 아예 더미 노드를 할당하지 않는다: 아주 단순명쾌하고 효과적입니다만, 결과적으로 우리가 애초에 더미 포인터를 써서 회피해 보려던 바로 그 예외 케이스들을 다시 원상 복구 시켜 불러들이는 꼴이 되어버립니다!
 
-* 정적으로 선언된 쓰기 복사(copy-on-write) 전용의 텅 빈 싱글톤 더미 노드를 하나 박아두고, 쓰기 복사 검증 절차가 일반 검사 로직에 교묘하게 꼽사리 끼어 무임승차(piggy-back)하게 만드는 개쌉천재적인 기믹 꼼수(clever scheme)를 쓴다: 솔직히 말해서 존나 구미가 당기긴 합니다, 전 저런 미친 짓거리(shit)를 진심으로 열렬히 사랑하거든요. 하지만 안타깝게도 이 책에서 차마 그런 어둠의 심연(dark path) 루트를 타게 해드릴 순 없습니다. 그런 종류의 변태적인 미친 코드(perverted stuff)가 죽도록 보고 싶으시다면 [ThinVec의 소스코드(ThinVec's sourcecode)](https://docs.rs/thin-vec/0.2.4/src/thin_vec/lib.rs.html#319-325)를 직접 한번 까보시길 권합니다.
+* 정적으로 선언된 쓰기 복사(copy-on-write) 전용의 텅 빈 싱글톤 더미 노드를 하나 박아두고, 쓰기 복사 검증 절차가 일반 검사 로직에 교묘하게 꼽사리 끼어 무임승차(piggy-back)하게 만드는 정말 천재적인 기믹 꼼수(clever scheme)를 쓴다: 솔직히 말해서 정말 구미가 당기긴 합니다, 전 저런 말도 안 되는 짓(shit)를 진심으로 열렬히 사랑하거든요. 하지만 안타깝게도 이 책에서 차마 그런 어둠의 심연(dark path) 루트를 타게 해드릴 순 없습니다. 그런 종류의 변태적인 황당한 코드(perverted stuff)가 죽도록 보고 싶으시다면 [ThinVec의 소스코드(ThinVec's sourcecode)](https://docs.rs/thin-vec/0.2.4/src/thin_vec/lib.rs.html#319-325)를 직접 한번 까보시길 권합니다.
 
 * 더미 노드를 그냥 콜 스택(stack) 위에 때려 박아둔다 - 애석하지만 C++ 스타일의 이동 생성자(move-constructors) 따위가 없는 이 동네 언어에선 써먹기엔 좀 무리수(not practical)입니다. 뭐 분명히 [고정(pinning)](https://doc.rust-lang.org/std/pin/index.html) 같은 걸 써먹어서 뭔가 해괴망측한 변태 짓거리(weird thing)를 해볼 여지도 있긴 하겠으나, 우린 안 할 겁니다.
 
-문제점 2: 이놈의 더미 노드 안엔 대체 무슨 *값(value)*을 집어넣어야 합니까? 뭐 안에 담긴 게 정수(integer) 따위라면야 대충 숫자나 때려 박으면 그만이니 문제없겠지만, 만약 우리가 `Box`로 꽉꽉 역겨운 리스트를 생성해버렸다면 어쩔 겁니까? 현실적으로 우리가 이 더미 값을 초기화하는 것 자체가 쌩 불가능해질 수도 있습니다! 이에 대한 잠재적 해결책들은 대략 이렇습니다:
+문제점 2: 이녀석 더미 노드 안엔 대체 무슨 *값(value)*을 집어넣어야 합니까? 뭐 안에 담긴 게 정수(integer) 따위라면야 대충 숫자나 때려 박으면 그만이니 문제없겠지만, 만약 우리가 `Box`로 꽉꽉 역겨운 리스트를 생성해버렸다면 어쩔 겁니까? 현실적으로 우리가 이 더미 값을 초기화하는 것 자체가 쌩 불가능해질 수도 있습니다! 이에 대한 잠재적 해결책들은 대략 이렇습니다:
 
-* 그냥 속 편하게 모든 노드가 `Option<T>`를 품게 만든다: 참 단순하고 효과적이긴 한데, 덤으로 쓸데없이 뚱뚱해지고 번거로워져서 개빡칩니다(bloated and annoying).
+* 그냥 속 편하게 모든 노드가 `Option<T>`를 품게 만든다: 참 단순하고 효과적이긴 한데, 덤으로 쓸데없이 뚱뚱해지고 번거로워져서 정말 화나는칩니다(bloated and annoying).
 
-* 아예 모든 노드가 대놓고 [`MaybeUninit<T>`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html)를 저장하게 만든다. 존나 소름 끼치고 짜증 납니다(Horrifying and annoying).
+* 아예 모든 노드가 대놓고 [`MaybeUninit<T>`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html)를 저장하게 만든다. 정말 소름 끼치고 짜증 납니다(Horrifying and annoying).
 
-* 상속(inheritance) 비스무리한 기법으로 타입 시스템을 벼랑 끝에서 줄타기 시키는 아주 *극도로(Really)* 조심스럽고 교묘한 눈속임 타이핑 기만(type punning)을 구사하여, 더미 노드만큼은 그 데이터 필드 자체를 아예 가지지 않도록 증발시켜 버린다. 이 역시 존나리 입맛이 당기는 제안이긴 한데, 극히 치명적으로 뇌졸중 올 만큼 존나게 위험천만하고 개짜증 나는(dangerous and annoying) 수법입니다. 그런 종류의 변태적인 미친 코드(perverted stuff)가 정 보고 싶어 미치시겠다면 [BTreeMap의 소스코드(BTreeMap's source)](https://doc.rust-lang.org/1.55.0/src/alloc/collections/btree/node.rs.html#49-104)를 직접 까보십시오.
+* 상속(inheritance) 비스무리한 기법으로 타입 시스템을 벼랑 끝에서 줄타기 시키는 아주 *극도로(Really)* 조심스럽고 교묘한 눈속임 타이핑 기만(type punning)을 구사하여, 더미 노드만큼은 그 데이터 필드 자체를 아예 가지지 않도록 증발시켜 버린다. 이 역시 엄청나게 입맛이 당기는 제안이긴 한데, 극히 치명적으로 뇌졸중 올 만큼 엄청나게 위험천만하고 개짜증 나는(dangerous and annoying) 수법입니다. 그런 종류의 변태적인 황당한 코드(perverted stuff)가 정 보고 싶어 미치시겠다면 [BTreeMap의 소스코드(BTreeMap's source)](https://doc.rust-lang.org/1.55.0/src/alloc/collections/btree/node.rs.html#49-104)를 직접 까보십시오.
 
 Rust 같은 깐깐한 언어에서는 이런 골칫거리들이 차라리 더미 노드가 주는 편리함을 완전히 씹어먹고도 남을 지경(outweigh)이므로, 우리는 얌전히 전통적인 레이아웃(traditional layout) 방식을 고수하기로 타협하겠습니다. 대신 이전 장에서 안전하지 않은 큐(unsafe queue)를 조립할 때 써먹었던 것과 동일한 기초 뼈대 디자인을 우려먹을 요량입니다:
 

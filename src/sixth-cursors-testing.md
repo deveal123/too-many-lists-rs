@@ -166,7 +166,7 @@ failures:
 test result: FAILED. 12 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-솔직히 말해서 참회하자면, 저 스스로 완벽하게(nailed it) 짰을 거라며 근자감(hubris)에 좀 심하게 쩔어 있었습니다. 뭐 이 맛에 테스트 코드 짜는 거 아니겠습니까 (아니면 그냥 제가 원래 있던 테스트를 복붙(porting)하면서 병신같이 옮겨 적었을 수도 있고요..?).
+솔직히 말해서 참회하자면, 저 스스로 완벽하게(nailed it) 짰을 거라며 근자감(hubris)에 좀 심하게 쩔어 있었습니다. 뭐 이 맛에 테스트 코드 짜는 거 아니겠습니까 (아니면 그냥 제가 원래 있던 테스트를 복붙(porting)하면서 어리석게 옮겨 적었을 수도 있고요..?).
 
 첫 번째 연쇄 추돌 사고(first failure) 원인이 뭐죠?
 
@@ -186,7 +186,7 @@ assert_eq!(cursor.current(), None);
 assert_eq!(cursor.peek_next(), Some(&mut 1)); // DIES HERE
 ```
 
-이런 젠장, 진짜 생초보도 안 할 가장 기초적인 기능(basic functionality)부터 좆창내놨었네요. 잠깐만,
+이런 젠장, 진짜 생초보도 안 할 가장 기초적인 기능(basic functionality)부터 망쳐놨었네요. 잠깐만,
 
 > 머리 비우고 걍 타이핑 칩니다. Option 메서드들과 컴파일러가 알아서 쌍욕 박으며(omitted compiler errors) 토해내는 피드백들이 제 뇌를 대신해서 모든 걸 다 생각(all thinking) 해주고 있습니다.
 
@@ -233,7 +233,7 @@ thread 'test::test_cursor_move_peek' panicked at 'assertion failed: `(left == ri
  right: `None`', src\lib.rs:1078:9
 ```
 
-아니 잠깐, 이번엔 아예 *더 앞에서부터(further back)* 터지잖아. 오케이 인정 반성합니다. 이제 `peek` 짤 땐 제발 뇌 빼고 치는 거 그만둬야겠습니다. 겉보기와 달리 이 녀석 제가 생각했던 것보다 훨씬 더 딥다크(lot harder)한 새끼였네요. 무지성으로 체이닝만 덕지덕지 이어 붙이는 건 걍 파멸로 가는 지름길(disaster)이니, 제대로 빡 각 잡고 유령일 경우와 아닐 경우를 `if` 문으로 갈라치기 해줍시다:
+아니 잠깐, 이번엔 아예 *더 앞에서부터(further back)* 터지잖아. 오케이 인정 반성합니다. 이제 `peek` 짤 땐 제발 뇌 빼고 치는 거 그만둬야겠습니다. 겉보기와 달리 이 녀석 제가 생각했던 것보다 훨씬 더 딥다크(lot harder)한 녀석였네요. 무지성으로 체이닝만 덕지덕지 이어 붙이는 건 걍 파멸로 가는 지름길(disaster)이니, 제대로 빡 각 잡고 유령일 경우와 아닐 경우를 `if` 문으로 갈라치기 해줍시다:
 
 ```rust ,ignore
 pub fn peek_next(&mut self) -> Option<&mut T> {
@@ -287,7 +287,7 @@ test result: FAILED. 13 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out;
 
 좋았어(Yesss). 자 이제 딱 하나만 더 잡으면... 어라.
 
-아까 제가 `remove_current` 기능 테스트하려고 짜둔 코드 주석 처리(commented out) 해버린 거 눈치채셨나요? 네, 이 망할 테스트 코드가 내부적으로 상태값을 유지하며 파멸로 치닫고 있는(stateful) 연쇄 구조란 걸 빡대가리처럼 놓치고 있었죠. 걍 미련 없이 `remove_current` 가 휩쓸고 지나간 파멸 후의 상태값으로 리스트를 뚝딱 새로 하나 창조해 줍시다:
+아까 제가 `remove_current` 기능 테스트하려고 짜둔 코드 주석 처리(commented out) 해버린 거 눈치채셨나요? 네, 이 망할 테스트 코드가 내부적으로 상태값을 유지하며 파멸로 치닫고 있는(stateful) 연쇄 구조란 걸 빡머리처럼 놓치고 있었죠. 걍 미련 없이 `remove_current` 가 휩쓸고 지나간 파멸 후의 상태값으로 리스트를 뚝딱 새로 하나 창조해 줍시다:
 
 ```rust ,ignore
 let mut m: LinkedList<u32> = LinkedList::new();
@@ -377,13 +377,13 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 진짜 끝났습니다.(Done.)
 
-우리가 해냈습니다 씨발. 우리가 마침내 std 구현체랑 비비는 깡패 같은 성능과 기본기를 두루 갖춘 상용(production-quality) LinkedList를 이 두 손으로 직접 빚어냈습니다. 중간중간 쓸데없는 자잘한 편의성 메서드(convenience methods)들을 꽤 빼먹긴 했지만요? 당연히 빼먹었죠 시발. 나중에 제가 이 크레이트를 직접 릴리스(published)할 날이 오면 마저 다듬어 넣을까요? 아마도 삘 꽂히면 그러겠죠!
+우리가 해냈습니다 젠장. 우리가 마침내 std 구현체랑 비비는 깡패 같은 성능과 기본기를 두루 갖춘 상용(production-quality) LinkedList를 이 두 손으로 직접 빚어냈습니다. 중간중간 쓸데없는 자잘한 편의성 메서드(convenience methods)들을 꽤 빼먹긴 했지만요? 당연히 빼먹었죠 젠장. 나중에 제가 이 크레이트를 직접 릴리스(published)할 날이 오면 마저 다듬어 넣을까요? 아마도 삘 꽂히면 그러겠죠!
 
-하지만, 전 지금, 말도 안 되게 개같이 지쳤습니다(So Very Tired).
+하지만, 전 지금, 말도 안 되게 정말  지쳤습니다(So Very Tired).
 
 어쨌든. 우리의 승리입니다.
 
-아 잠깐 썅. 우리 상용(production quality) 퀄리티 지향한다 하지 않았음? 오케이 진짜 찐막 리얼 마지막 숨겨진 최종 보스: 클리피(clippy) 님 모시겠습니다.
+아 잠깐 젠장. 우리 상용(production quality) 퀄리티 지향한다 하지 않았음? 오케이 진짜 찐막 리얼 마지막 숨겨진 최종 보스: 클리피(clippy) 님 모시겠습니다.
 
 ```text
 cargo clippy
@@ -442,7 +442,7 @@ warning: `linked-list` (lib) generated 4 warnings
 
 자 들어오시죠 클리피 성님, 한 번 해봅시다.
 
-불만 사항 1 (그리고 3): `while .is_some()` 놔두고 왜 굳이 `while let Some(_) = ` 같은 똥꼬쇼를 하냐는군요. 어차피 루프 속이 텅텅 비어서(empty) 진짜 단 1미리의 속도 차이도 안 나는 개뻘짓(doesn't matter)이긴 한데, 알겠습니다 쒸발, 클리피 성님이 하라면 성님 방식대로(your way) 기어야죠.
+불만 사항 1 (그리고 3): `while .is_some()` 놔두고 왜 굳이 `while let Some(_) = ` 같은 똥꼬쇼를 하냐는군요. 어차피 루프 속이 텅텅 비어서(empty) 진짜 단 1미리의 속도 차이도 안 나는 개뻘짓(doesn't matter)이긴 한데, 알겠습니다 젠장, 클리피 성님이 하라면 성님 방식대로(your way) 기어야죠.
 
 불만 사항 2: 우리가 자체적으로(inherent) `into_iter` 메서드를 박아뒀다는군요. 아니 잠깐, 왜 뭐가 문젠.. *std 코드를 까본다* 아 오케이, 이번 건 클리피 성님 1점. `IntoIterator`는 근본 중의 근본 프렐류드(prelude) (사실상 언어 자체 내장품(lang item))에 박혀있기 때문에, 우리가 굳이 허세 부리며 자체 버전까지 쑤셔 넣을(inherent version too) 필욘 없죠.
 

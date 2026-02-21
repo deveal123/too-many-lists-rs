@@ -247,7 +247,7 @@ note: but, the lifetime must be valid for the lifetime 'a as defined on the impl
 
 > 그 수명은 당연히 impl 문 윗단에 선언 통과시켜둔 증명 딱지 수명 규약 `'a` 길이 기한 조건에 완벽하게 부합 일치해야만 한다(the lifetime must be valid for the lifetime `'a`)
 
-우리는 이 `push` 메서드의 `self` 함수 몸통 구석에서 대출 참조자를 슬쩍 몰래 빌리고(borrowing from `self`) 있는데, 저기 컴파일러 님께서는 그 발급된 도주 참조자가 저 거대한 우주 통짜 수명 명줄 `'a`의 영겁 시간 내내 완벽 끝까지 뻗대어 유지 살아생존 장수(last as long as `'a`) 하기를 요구 명시하는 골때리는 모순 강요를 투척합니다. 그럼 까짓거 에라 모르겠다 이판사판으로, 컴파일러놈 얼굴 면전에다 대고 "야 내 숙주 `self` 몸통 녀석 자체가 진짜 우주급으로 완전 그 개긴 존엄 수명 기간 내내까지 살아 숨쉬어 버티거든!" 하고 대포허세 우기기 기만(tell it `self` *does* last that long..?)을 확 꽂아보면 어떤 꼴이 날까요..?
+우리는 이 `push` 메서드의 `self` 함수 몸통 구석에서 대출 참조자를 슬쩍 몰래 빌리고(borrowing from `self`) 있는데, 저기 컴파일러 님께서는 그 발급된 도주 참조자가 저 거대한 우주 통짜 수명 명줄 `'a`의 영겁 시간 내내 완벽 끝까지 뻗대어 유지 살아생존 장수(last as long as `'a`) 하기를 요구 명시하는 골때리는 모순 강요를 투척합니다. 그럼 까짓거 에라 모르겠다 이판사판으로, 컴파일러녀석 얼굴 면전에다 대고 "야 내 숙주 `self` 몸통 녀석 자체가 진짜 우주급으로 완전 그 개긴 존엄 수명 기간 내내까지 살아 숨쉬어 버티거든!" 하고 대포허세 우기기 기만(tell it `self` *does* last that long..?)을 확 꽂아보면 어떤 꼴이 날까요..?
 
 ```rust ,ignore
     pub fn push(&'a mut self, elem: T) {
@@ -265,7 +265,7 @@ warning: field is never used: `elem`
   = note: #[warn(dead_code)] on by default
 ```
 
-오, 헐퀴, 저 미친 농간이 통과(worked)하네요! 대박! (Great!)
+오, 헐퀴, 저 황당한 농간이 통과(worked)하네요! 대박! (Great!)
 
 여세가 꺾이기 전에 `pop` 녀석도 서둘러 뚝딱 끝장(just do `pop` too)을 바릅시다:
 
@@ -300,7 +300,7 @@ mod test {
         // 텅 빈 바구니 리스트가 정상 제정신 차리나 거동 확인(Check empty list behaves right)
         assert_eq!(list.pop(), None);
 
-        // 리스트 안에 미친 듯 영양분 주입 불림 증식 탑재(Populate list)
+        // 리스트 안에 황당한 듯 영양분 주입 불림 증식 탑재(Populate list)
         list.push(1);
         list.push(2);
         list.push(3);
@@ -355,7 +355,7 @@ error: aborting due to 11 previous errors
 
 이 짓거리가 *그럭저럭(sort of)* 컴파일은 되는 이유는, Rust에는 애초에 '자기 자신 안으로 향하는 포인터'라는 개념 자체(notion of a pointer into yourself at all)가 없기 때문입니다. 코드의 각 부분은 각개격파로 떼어 놓고 컴파일러가 심사했을 때 *기술적으로는* 모두 올바른 상태입니다. (우리는 push와 pop을 *단 한 번만* 호출할 수는 있습니다.) 하지만 그 직후, 우리가 창조해낸 저 모순 덩어리 존재(absurdity of what we created)가 활동을 개시하며 시스템의 모든 것을 *마비(locks up)* 시켜버립니다.
 
-우리가 짠 이 코드가 어딘가에는(some use) 써먹을 데가 있을지도 모르겠지만, 적어도 제 생각(I'm concerned)에는 그저 문법적으로만 유효한(syntactically valid) *쓰레기 헛소리(gibberish)* 에 불과합니다. 우리는 지금 이 리스트가 `'a` 라는 수명을 품고 있고, `push` 와 `pop` 메서드가 바로 그 수명 내내 `self`를 쭉 빌려가(borrows *self*) 묶어둔다고 우기고 있습니다. 그건 진짜 이상한(weird) 상황이지만, Rust 컴파일러 입장에선 코드 각 구획을 쪼개서 개별적으로 심사할 땐(can look at each part .. individually) 딱히 당장 어긋나는 규칙을 발견하지 못합니다(doesn't see any rules being broken).
+우리가 짠 이 코드가 어딘가에는(some use) 써먹을 데가 있을지도 모르겠지만, 적어도 제 생각(I'm concerned)에는 그저 문법적으로만 유효한(syntactically valid) *형편없는 것 헛소리(gibberish)* 에 불과합니다. 우리는 지금 이 리스트가 `'a` 라는 수명을 품고 있고, `push` 와 `pop` 메서드가 바로 그 수명 내내 `self`를 쭉 빌려가(borrows *self*) 묶어둔다고 우기고 있습니다. 그건 진짜 이상한(weird) 상황이지만, Rust 컴파일러 입장에선 코드 각 구획을 쪼개서 개별적으로 심사할 땐(can look at each part .. individually) 딱히 당장 어긋나는 규칙을 발견하지 못합니다(doesn't see any rules being broken).
 
 하지만 우리가 리스트를 실제로 *사용(use)* 하려고 시도하는 그 즉시, 컴파일러는 곧바로 철퇴를 내립니다. "그래, 네가 `self`를 `'a` 기간 전체 동안 가변으로 빌려갔지(borrowed `self` mutably for `'a`)? 그러니 넌 이제 그 `'a` 기간이 끝날 때까지 다신 `self`에 손도 못 대(can't use `self` anymore)." 거기에 그치지 않고 쌍싸대기(but *also*)를 더 날리죠. "근데 네 리스트 안에 `'a` 딱지 영수증이 들어있으니, 이 수명은 당연히 전체 리스트의 존재 수명 전체(entire list's existence) 기간 중 내내 강제로 유효하게 유지되어야만 해(must be valid for)."
 
@@ -388,7 +388,7 @@ if self.head.is_none() {
 부디. 살려. 제발.
 
 아뇨, 대신 우리는 정상 궤도 궤도를 이탈해(off the rails) 완전 돌변해서 그 위험한 *원시 포인터(raw pointers)* 마개조 영역에 몸을 던질 겁니다.
-우리의 새 레이아웃 꼬라지는 이제 이따위가 될 겁니다:
+우리의 새 레이아웃 모습는 이제 이따위가 될 겁니다:
 
 ```rust ,ignore
 pub struct List<T> {
@@ -404,7 +404,7 @@ struct Node<T> {
 }
 ```
 
-자, 여기까지입니다. 여긴 더 이상 저 연약 쫄보 동적 참조자 안전 그물 렌탈 심사역(reference-counted-dynamic-borrow-checking) 나부랭이 찌끄러기 같은 헛소리 따윈 통용되지 않습니다! 레알 생. 존나게 하드. 무방비 프리패스 검문 제로. 진짜 생 포인터(Real. Hard. Unchecked. Pointers).
+자, 여기까지입니다. 여긴 더 이상 저 연약 쫄보 동적 참조자 안전 그물 렌탈 심사역(reference-counted-dynamic-borrow-checking) 같은 것 찌끄러기 같은 헛소리 따윈 통용되지 않습니다! 레알 생. 엄청나게 하드. 무방비 프리패스 검문 제로. 진짜 생 포인터(Real. Hard. Unchecked. Pointers).
 
 > **해설자:** 훗날 역사가 증명하건대, 사실 저 코딩 구현본 디자인조차도 여전히 끔찍할 만치 심각하게 뒤틀린 오류 시한폭탄 위험을 내포한 불완전 사생아였지. 하지만 아직은 이 오만방자 녀석이 그 피눈물의 쓰라린 교훈을 깨닫기엔 시기상조일세. 다음 진도 섹션에서 예전처럼 처절히 맨땅에 헤딩하며 하드 투쟁 모드로 깨달아갈 테지.
 

@@ -1,4 +1,4 @@
-# 대칭 구조의 쓰레기들 (Symmetric Junk)
+# 대칭 구조의 형편없는 것들 (Symmetric Junk)
 
 자, 이제 이 지긋지긋한 조합론적 좌우쌍 대칭(combinatoric symmetry) 패턴의 노동을 싹 다 한방에 해치워 끝내버립시다(get all that over with).
 
@@ -77,7 +77,7 @@ fn basics() {
     // 빈 깡통 리스트 녀석이 똑바로 정신 차리고 행동거지 군기 똑바로 처먹었는지 검수
     assert_eq!(list.pop_front(), None);
 
-    // 대가리에 알맹이 좀 구겨 넣어 바구니 살찌우기
+    // 머리에 알맹이 좀 구겨 넣어 바구니 살찌우기
     list.push_front(1);
     list.push_front(2);
     list.push_front(3);
@@ -86,7 +86,7 @@ fn basics() {
     assert_eq!(list.pop_front(), Some(3));
     assert_eq!(list.pop_front(), Some(2));
 
-    // 혹시라도 이 요망한 놈이 몰래 뒤로 슬쩍 고장 나(corrupted) 있진 않은지 압박 검증차 기습 추가 투입 강행 발동
+    // 혹시라도 이 요망한 녀석이 몰래 뒤로 슬쩍 고장 나(corrupted) 있진 않은지 압박 검증차 기습 추가 투입 강행 발동
     list.push_front(4);
     list.push_front(5);
 
@@ -142,7 +142,7 @@ fn peek() {
 }
 ```
 
-솔직히 구멍 숭숭 뚫려 아직 우리가 눈 뜬 장님처럼 검증 못 하고 미처 테스트 통과 안 시켜 넘긴 예외 케이스(cases we're not testing) 사각지대가 존재하냐고요? 아마 그럴 확률 100%(Probably) 일 겁니다. 이 양방향 대칭 조합의 복합 경우의 수 영역 넓이는 진심 여기서 문자 그대로 우주 차원급으로 폭발 급증 팽창(blown up) 해 있기 때문입니다. 그래도 뭐 우리 코드가 최소한 대놓고 바닥에 콧물 흘릴 만큼 *명백히 개노답 병신(obviously wrong)* 썩진 않았을 거라 위안해 봅니다.
+솔직히 구멍 숭숭 뚫려 아직 우리가 눈 뜬 장님처럼 검증 못 하고 미처 테스트 통과 안 시켜 넘긴 예외 케이스(cases we're not testing) 사각지대가 존재하냐고요? 아마 그럴 확률 100%(Probably) 일 겁니다. 이 양방향 대칭 조합의 복합 경우의 수 영역 넓이는 진심 여기서 문자 그대로 우주 차원급으로 폭발 급증 팽창(blown up) 해 있기 때문입니다. 그래도 뭐 우리 코드가 최소한 대놓고 바닥에 콧물 흘릴 만큼 *명백히 개노답 바보(obviously wrong)* 썩진 않았을 거라 위안해 봅니다.
 
 ```text
 > cargo test

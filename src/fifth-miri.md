@@ -62,7 +62,7 @@ I will run `"cargo.exe" "install" "xargo"` to install
 a recent enough xargo. Proceed? [Y/n]
 ```
 
-아니 시발 대체 XARGO가 또 뭡니까?
+아니 젠장 대체 XARGO가 또 뭡니까?
 
 *"다 괜찮아, 너무 걱정하지 마(don't worry about it)."*
 
@@ -116,35 +116,35 @@ error: aborting due to previous error
 
 와. 이 오류 진짜 장난 아니게 끔찍하네요(one heck of an error).
 
-*"캬아, 저 끔찍한 쓰레기 똥더미 같은 에러 메시지 꼬라지 좀 봐. 진짜 보면 눈물 나게 짜릿하지(You love to see it)."*
+*"캬아, 저 끔찍한 형편없는 것 똥더미 같은 에러 메시지 모습 좀 봐. 진짜 보면 눈물 나게 짜릿하지(You love to see it)."*
 
 고... 고맙습니다?
 
-*"여기 덤으로 이 정신과 약 에스트로겐 진통제 한 병(bottle of estradiol)도 챙겨 둬, 분명히 좀 이따 대가리 터질 때 절실히 필요할(gonna need it later) 테니까."*
+*"여기 덤으로 이 정신과 약 에스트로겐 진통제 한 병(bottle of estradiol)도 챙겨 둬, 분명히 좀 이따 머리 터질 때 절실히 필요할(gonna need it later) 테니까."*
 
 잠깐만 왜요? 대체 내 뇌가 무슨 꼴을 보게 되길래?
 
 *"너 지금 당장부터 메모리 모델(memory models)이라는 지옥 심연의 철학관에 몸 바쳐 치열하게 고민(about to think about)해야 하거든, 이 전문가 말을 믿어(trust me)."*
 
-> **해설자:** 그러곤 이 수상쩍은 골목길 여우(fox) 둔갑 괴인 놈은 구멍 속으로 냅다 도망쳐버렸습니다(scampered). 안쓰러운 저희 저자는 방금 전 자기 눈앞에서 뭐가 번쩍 휘몰아친 건지 상황을 간신히 소화(process)하느라 몇 분간(several minutes) 하염없이 허공만 멍하니 바라보고 있었습니다.
+> **해설자:** 그러곤 이 수상쩍은 골목길 여우(fox) 둔갑 괴인 녀석은 구멍 속으로 냅다 도망쳐버렸습니다(scampered). 안쓰러운 저희 저자는 방금 전 자기 눈앞에서 뭐가 번쩍 휘몰아친 건지 상황을 간신히 소화(process)하느라 몇 분간(several minutes) 하염없이 허공만 멍하니 바라보고 있었습니다.
 
 -------
 
-그 골목길 마약 밀매 여우놈은 제 성별 정체성을 맞춘 것뿐만 아니라(right about more than just my gender) 또 한 가지 팩트를 기가 막히게 적중시켰습니다: miri 이 녀석은 진짜배기 보물성 약쟁이 투약품(The Good Shit)이라는 사실 말입니다.
+그 골목길 마약 밀매 여우녀석은 제 성별 정체성을 맞춘 것뿐만 아니라(right about more than just my gender) 또 한 가지 팩트를 기가 막히게 적중시켰습니다: miri 이 녀석은 진짜배기 보물성 약쟁이 투약품(The Good Shit)이라는 사실 말입니다.
 
-그럼 대체 [miri](https://github.com/rust-lang/miri)라는 놈의 정체성(what *is*)이 뭡니까?
+그럼 대체 [miri](https://github.com/rust-lang/miri)라는 녀석 정체성(what *is*)이 뭡니까?
 
 > Rust의 중간 언어(MIR)를 해석해서 시뮬레이션으로 굴려보는 실험적인 인터프리터(interpreter). 얘는 cargo 프로젝트의 바이너리 파편이나 테스트 코드들을 단일 실행(run)시키면서 특정 부류의 치명적인 미정의 동작(undefined behavior) 폭탄들을 칼같이 적발해낼 수 있습니다:
 >
 > * 배열 밖 불법 침범(Out-of-bounds) 및 할당 해제된 찌꺼기 메모리 재사용(use-after-free)
-> * 초기화 안 된 더미 데이터 불량 쓰레기 무단 남용(use of uninitialized data)
+> * 초기화 안 된 더미 데이터 불량 형편없는 것 무단 남용(use of uninitialized data)
 > * 내재 필수 규칙 위반 (도달 불능 블록인 `unreachable_unchecked` 가 뚫려 실행되거나, 범위가 겹치는데 뻔뻔하게 `copy_nonoverlapping` 복사 함수를 남발하는 등의 내재 규칙 기만)
 > * 메모리 정렬 기준에 맞지 않는(Not sufficiently aligned) 엉망진창 포인터 메모리 무단 접근
-> * 근본 타입 규칙 파괴(Violation of some basic type invariants) (예컨대 값이 0이나 1이 아닌 불량 bool 타입, 또는 판별자가 박살 난 쓰레기 enum 데이터)
+> * 근본 타입 규칙 파괴(Violation of some basic type invariants) (예컨대 값이 0이나 1이 아닌 불량 bool 타입, 또는 판별자가 박살 난 형편없는 것 enum 데이터)
 > * (실험실 기능: Experimental) 생태계 안전선을 관장하는(governing) Stacked Borrows 차용 스택 누적 동기화 규칙 전면 위법(Violations) 저항 적발
 > * (실험실 기능: Experimental) 배타 참조 무시 데이터 레이스(Data races) 충돌 적발 판별 (단 약한 메모리 부작용 예외)
 >
-> 덤으로, Miri는 메모리 누수(memory leaks) 구멍 적발까지 도와줍니다: 즉 프로그램의 런타임 실행이 모조리 끝난 뒤에도(at the end of the execution) 여전히 해제되지 못하고 방치되어 남겨진 병든 할당된 고아 메모리 좀비 조각들 중, 글로벌 정적 스태틱 루트(global static)에서 직접 도달할 연결선마저 끊어진 채 미아가 된 떠돌이 불법 무연고 데이터 잔해물 시체들이 생존 중탁 남아있다면 즉시 Miri가 미친듯 누적 에러 호루라기(raise an error) 경고를 집행해 줍니다.
+> 덤으로, Miri는 메모리 누수(memory leaks) 구멍 적발까지 도와줍니다: 즉 프로그램의 런타임 실행이 모조리 끝난 뒤에도(at the end of the execution) 여전히 해제되지 못하고 방치되어 남겨진 병든 할당된 고아 메모리 좀비 조각들 중, 글로벌 정적 스태틱 루트(global static)에서 직접 도달할 연결선마저 끊어진 채 미아가 된 떠돌이 불법 무연고 데이터 잔해물 시체들이 생존 중탁 남아있다면 즉시 Miri가 황당한듯 누적 에러 호루라기(raise an error) 경고를 집행해 줍니다.
 >
 > ...
 >
@@ -152,19 +152,19 @@ error: aborting due to previous error
 
 가볍게 세 줄 핵심 정리(TL;DR): Miri는 너의 코드를 동적으로 한 줄 한 줄 렌더링 해석(interprets)하며, 런타임(at runtime) 중에 코드가 금지된 규칙을 부수고(break the rules) 미정의 동작(Undefined Behaviour) 범죄를 저지르는 순간 적발해 내는 경찰입니다. 이건 무척이나 필수불가결(necessary)한 제약 체계인데, 애당초 미정의 동작(Undefined Behaviour)이라는 불법 오류 폭탄의 지상 본질 성격 자체가 기본적으로(generally) 컴파일 타임이 아니라 이렇듯 꼭 런타임 중에 야생에서 튀어나오는 종자이기 때문입니다. 뭐 진작 컴파일 타임(compile time) 정적 설계 렌더 엑스레이 단계에서 바로 조기 적발(could be found)될 만한 하찮은 실수 수준이었다면야, 위대하신 컴파일러 님께서 진작 빌드 스톱 빠꾸 강퇴 린치 에러 단죄(make it an error)를 시켰겠죠!
 
-C 진영 언어권에서 흔한 ubsan(UndefinedBehaviorSanitizer) 이나 tsan(ThreadSanitizer) 등속의 검열 도구 잡다구리(tools)와 꽤 익숙하시다고(familiar)요? 그럼 말 다 했네요: Miri 이 놈은 그 잡다한 유틸 도구 병정들을 싹 다 한데 뒤죽박죽 믹스 총 스까 결집 병합 영끌 결합 우주 통합(all together) 융합시킨, 훨씬 지독히 강박 병적 극악 잔혹하고 하드코어한 대왕 무결(more extreme) 판사님입니다.
+C 진영 언어권에서 흔한 ubsan(UndefinedBehaviorSanitizer) 이나 tsan(ThreadSanitizer) 등속의 검열 도구 잡다구리(tools)와 꽤 익숙하시다고(familiar)요? 그럼 말 다 했네요: Miri 이 녀석은 그 잡다한 유틸 도구 병정들을 싹 다 한데 뒤죽박죽 믹스 총 스까 결집 병합 영끌 결합 우주 통합(all together) 융합시킨, 훨씬 지독히 강박 병적 극악 잔혹하고 하드코어한 대왕 무결(more extreme) 판사님입니다.
 
 -------
 
 자 이제 잔혹한 숙청 도구 검열관 Miri가 학습용 단검(knife. A learning knife)을 음산히 거머쥔 채 우리들의 스쿨 교실 창문 너머 밖에서 이빨 앙물고 대기 매복(hanging outside) 타는 중입니다.
 
-만약 우리가 Miri님께 부디 내 쓰레기 같은 코드 결과물이 무탈 안전한지 부디 심판 심사 시험 평가 진단 판독 검열 해석(check our work) 단죄 받기를 하사 원한다면야, 다음의 주문을 암송하여 그분들을 소환 심판 단위 제단(interpret our test suite)으로 인도할 수 있습니다:
+만약 우리가 Miri님께 부디 내 형편없는 것 같은 코드 결과물이 무탈 안전한지 부디 심판 심사 시험 평가 진단 판독 검열 해석(check our work) 단죄 받기를 하사 원한다면야, 다음의 주문을 암송하여 그분들을 소환 심판 단위 제단(interpret our test suite)으로 인도할 수 있습니다:
 
 ```text
 > cargo +nightly-2022-01-21 miri test
 ```
 
-좋소 자 이제 놈들이 우리의 책상 표면 가죽을 무자비하게 긁고 파내 갈겨 후벼 새긴(carved into our desk) 그 끔찍한 협박 판결 에러 낙인 메시지의 속뜻 진상을 더 밀착 확대 깊숙 집요하게 돋보기 세밀 정독 대조(take a closer look at) 감상해 보죠:
+좋소 자 이제 녀석이 우리의 책상 표면 가죽을 무자비하게 긁고 파내 갈겨 후벼 새긴(carved into our desk) 그 끔찍한 협박 판결 에러 낙인 메시지의 속뜻 진상을 더 밀착 확대 깊숙 집요하게 돋보기 세밀 정독 대조(take a closer look at) 감상해 보죠:
 
 ```text
 error: Undefined Behavior: trying to reborrow for Unique at alloc84055, but parent tag <209678> does not have an appropriate item in the borrow stack
@@ -186,6 +186,6 @@ error: Undefined Behavior: trying to reborrow for Unique at alloc84055, but pare
       for further information
 ```
 
-뭐, 우리가 개똥 치명적 불법 패륜 병크 쓰레기 코딩 에러 범죄(made an error)를 지렸단 눈물 참사 팩트 자체만큼은 뼈저리게 알겠는데, 근데 이 빌어먹을 판결문 에러 메시지 꼬라지가 너무 씨발 난데없는 외계어 모순 난무 카오스 정신병 급 헛소리 복잡 현학 기만(confusing) 오류 메시지라 숨이 턱 막힙니다. 뭐 대관절 대체 저놈의 "차용 스택(borrow stack)" 이란 개뼉다구 개소리가 대체 무슨(What's the) 해괴망측한 뜻이랍니까?
+뭐, 우리가 개똥 치명적 불법 패륜 병크 형편없는 것 코딩 에러 범죄(made an error)를 지렸단 눈물 참사 팩트 자체만큼은 뼈저리게 알겠는데, 근데 이 빌어먹을 판결문 에러 메시지 모습가 너무 젠장 난데없는 외계어 모순 난무 카오스 정신병 급 헛소리 복잡 현학 기만(confusing) 오류 메시지라 숨이 턱 막힙니다. 뭐 대관절 대체 저녀석 "차용 스택(borrow stack)" 이란 개뼉다구 헛소리가 대체 무슨(What's the) 해괴망측한 뜻이랍니까?
 
 대체 저 외계어 신장 판결의 실체 족보 진상 의미가 뭔지 그 내부 봉인 퍼즐 진실 내막 속 파헤치기 사변 타파 해소(figure that out) 진단 공작은 바로 다음 속편 연재 다음 장의 파트 단락에서 주먹구구 야무지게 돌파 시도 파보도록 합시다.

@@ -264,11 +264,11 @@ test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured
 
 이야아아아아!!!!! (EYYYY!!!!!)
 
-존나게 잘 작동하는구만! (IT FRIGGIN WORKED!)
+엄청나게 잘 작동하는구만! (IT FRIGGIN WORKED!)
 
 뭐 아마도요! (PROBABLY!)
 
-미정의 동작(UNDEFINED BEHAVIOUR)을 잡아내지 못했다고 해서 이 안에 진짜 아무 문제가 숨어있지 않다는 완벽한 증명이 될 순 없겠지만, 솔직히 연결 리스트 관련 농담 책(JOKE BOOK)을 쓰면서 제가 얼마나 더 엄밀(RIGOROUS)해져야 할지 한계가 있으니, 저는 그냥 이 결과를 100% 기계 검증된 완벽한 증명서(100% MACHINE VERIFIED PROOF)라고 선언해 버리렵니다. 딴지 거는 새끼들은 다 엿 먹으라죠!(SUCK MY COQ!)
+미정의 동작(UNDEFINED BEHAVIOUR)을 잡아내지 못했다고 해서 이 안에 진짜 아무 문제가 숨어있지 않다는 완벽한 증명이 될 순 없겠지만, 솔직히 연결 리스트 관련 농담 책(JOKE BOOK)을 쓰면서 제가 얼마나 더 엄밀(RIGOROUS)해져야 할지 한계가 있으니, 저는 그냥 이 결과를 100% 기계 검증된 완벽한 증명서(100% MACHINE VERIFIED PROOF)라고 선언해 버리렵니다. 딴지 거는 녀석들은 다 엿 먹으라죠!(SUCK MY COQ!)
 
 ∴ 증명 완료 (QED) □
 
