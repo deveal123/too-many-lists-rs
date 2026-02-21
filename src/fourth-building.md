@@ -95,25 +95,25 @@ error[E0609]: no field `next` on type `std::rc::Rc<std::cell::RefCell<fourth::No
 
 > 공유 자원 가변성이 탑재된 컨테이너 (Shareable mutable containers).
 >
-> `Cell<T>` 와 `RefCell<T>` 타입 수납장 안에 담긴 값(Values) 알맹이들은 모두 공유 참조자(through shared references - 즉 `&T`) 신분으로도 심지어 내부 조작 훼손(mutated)이 가능합니다; 반면 대다수 전형적인 Rust 타입류 녀석을 건드려 변형시키려면, 오직 오리지널 한 몸뚱이 단 1인 전용 혼자 독식 소유 접근권인 유니크 가변 차용(`&mut T`) 포인터여야만 철저히 강제됩니다. 그래서 저 파격적인 반전 무기인 `Cell<T>` 와 `RefCell<T>` 녀석들을 극찬해 유독 '내부 가변성(interior mutability)' 강령 능력을 품었다 수식하며, 그 외 나머지 평범 그 자체 정석 타입들을 싸잡아 '계승/세습형 가변성(exhibit 'inherited mutability')' 굴레 교도들이라 부르며 멸칭 대조(in contrast with)시킵니다.
+> `Cell<T>` 와 `RefCell<T>` 내부에 담긴 값(Values)은 공유 참조자(`&T`)를 통해서도 마음껏 변경(mutated)이 가능합니다. 이는 대부분의 일반적인 Rust 타입들이 오직 배타적인 가변 참조(`&mut T`)를 통해서만 변경을 허용하는 것과 매우 대조적(in contrast with)입니다. 우리는 이러한 셀 타입들의 특징을 가리켜 '내부 가변성(interior mutability)'을 가졌다고 부르며, 그 외 일반적인 타입들을 묶어 '계승된 가변성(inherited mutability)'을 따른다고 부릅니다.
 >
-> 셀 장비 타입들은 2가지 버전(flavors) 체제로 출시됩니다: `Cell<T>` 그리고 `RefCell<T>`. `Cell<T>` 녀석은 값어치가 싸고 편하게 `get` 이랑 `set` 이란 함수버튼 하나만 깔짝대도 즉석에서 무식하게 직방으로 알맹이 내용물을 덮어씌워 갈아채 치웁니다(change the interior value). 단 이 기똥찬 `Cell<T>`의 한계가 명확한데 오직 복제 가능 Copy 체질을 물려받은 타입 녀석 한정(only compatible with types that implement Copy) 전용이라는 구속입니다. 이걸 못 견디는 그 밖 다른 나머지 타계층 시민 유형들(other types)을 다루려면 하는 수 없이 고급 파생버전 `RefCell<T>`를 꺼내써야 하는데, 이건 조작 훼손 칼침(mutating) 꽂기 직전 구문에 필히 나홀로 점유락 자물쇠(write lock)를 한 번 더 결재 밟고 요구하는(acquiring a write lock) 과정을 거쳐야 합니다.
+> 셀 타입의 구현체로는 크게 `Cell<T>` 와 `RefCell<T>` 두 가지 종류(flavors)가 있습니다. `Cell<T>`의 경우 빠르고 간편하게 내부의 값을 덮어쓸(change the interior value) 수 있지만, 오직 `Copy` 트레이트를 구현한 타입에만 한정적으로 쓸(only compatible with types that implement Copy) 수 있습니다. 그 외의 나머지 타입들(other types)을 다루려 할 때는 반드시 `RefCell<T>`를 사용해야 하며, 이 구조체는 항상 변경(mutating) 작업 전에 먼저 동적으로 가변 대여 락(write lock)을 점유(acquiring a write lock)해야만 합니다.
 >
-> `RefCell<T>`는 Rust 특성인 수명 주기(lifetimes) 고무줄 철학을 집어삼킨 뒤 자체적인 '동적 대차 빌림술(dynamic borrowing)' 엔진 편법을 발명해 냅니다, 이 편법 과정하에서 여러분은 내부 단전 안쪽 알맹이에 다가갈 한시적(temporary) 배타 독점(exclusive) 가변 권한(mutable access) 사용 패스를 나름 선점 주장(claim) 외쳐 발급받을 자격을 누립니다. 본디 Rust 순정 오리지널 참조자 대출 락 감시망은 죄다 안전한 컴파일 타임 밖에서 완벽하게 문서 분석 추적(entirely tracked statically) 처리되지만 반면 사설 `RefCell<T>` 녀석 발급표 빚 대출(Borrows for `RefCell<T>`s) 딱지들은 오직 독단 룰로 돌아가는 어리둥절 '런타임 실행 즉석 현장 타임(at runtime)'에서만 동네방네 감시 통제(tracked)됩니다. 바로 이 감시대장 장부 자체가 미치도록 런타임 야매 동적 파동(dynamic)을 띄기 땜시, 만약 여러분이 넋을 빼놓고 이미 누가 앞서 가변 선점(already mutably borrowed) 대출 먹은 상태의 슬롯에 다시 나도 똑같은 가변 찌르기(attempt to borrow) 삽질을 재시도 들이밀 경우, 시스템상 어어 하고 통과 진입 돌파(possible to attempt) 병크가 열려버리는 현상; 이 터집니다. 그렇게 대충돌 스파크 박치기가 마찰되는 그 즉시 현장에 상주하던 사설통제 심사관은 즉결 처형으로 스레드 패닉 파괴 붕괴 폭발(results in thread panic) 버튼을 눌러버립니다.
+> `RefCell<T>`는 언어 차원의 정적인 수명 주기(lifetimes) 검사 규칙을 런타임에 동적으로 수행하는 동적 차용술(dynamic borrowing) 기법을 사용합니다. 이를 통해 여러분은 내부 값에 한시적인(temporary) 가변 접근(mutable access)을 수행할 수 있습니다. 본래 Rust의 표준 차용 검사는 소스 코드가 컴파일될 무렵 철저하게 정적으로 추적(tracked statically)되지만, `RefCell<T>`의 차용 여부(Borrows for `RefCell<T>`s)는 프로그램이 동작하는 '런타임 실행 중(at runtime)'에만 감시되고 추적(tracked)됩니다. 이런 동적 감시 체계 때문에 만약 누군가 이미 `RefCell<T>` 내부의 값을 가변으로 차용(already mutably borrowed)하고 있는 도중에 또 다른 곳에서 중복 가변 차용을 시도(attempt to borrow)하게 되면 런타임 동적 오류를 발생시켜 스레드를 즉시 패닉(results in thread panic)시킵니다.
 >
-> # 그렇다면 언제 이 요망한 내부 가변성 무기 사용을 택설해야 하는가 (When to choose interior mutability)
+> # 그렇다면 내부 가변성은 언제 선택해야 하는가 (When to choose interior mutability)
 >
-> 보편적 진리의 유일신 강령인 전형적 계승/세습 가변성(inherited mutability), 즉 무조건 절대 배타 독점 1인 독식 권리장전 가변 대출 허가증 창구에서 승인을 얻는 행위만 허락되는 그 꽉 막힌 철칙이야말로, 초창기 태곳적 Rust 언어가 설계되었을 때 온 세계 수많은 파편 동시다발 포인터 지옥(pointer aliasing) 복합 참조자 붕괴 겹침 사태를 완벽하게 분할 척결 억압(reason strongly)시킴으로써 프로그램 돌연사 사망 오류 크래쉬(crash bugs) 펑크사고를 원천부터 차단 봉쇄하는(statically preventing) 근간 핵심 요소 중 알파이자 오메가(one of the key language elements)이자 절대 신성 마법 전제 대의입니다. 고로 이 계승/가변성 철칙 규율은 항상 제 1지망 최우선 선호 선택지 모범 답안으로 추앙 유도되지만(preferred), 저 반대편 도박 뒷구멍 패스권 무기인 내부 가변성(interior mutability) 채용 스킬 트리는 정말 진짜 말 그대로 최후의 비상 수단 벼랑 끝(last resort) 선택지 정도로만 치부해 취급 대면하는 게 이치에 맞습니다. 하지만, 세상사가 원래 저런 편법 셀 기술 조직들이 원래는 안 돼요 거절 차단 금지 당했을 법(disallowed)한 기막힌 조건 환경에서조차 마법처럼 길을 뚫어 가변 수정 파동의 기적을 여과 없이 열어주기에(enable mutation), 살다 보면 때론 이 내부 가변성이 딱 맞춤(appropriate)으로 제격이거나 아니 아예 필수로 써먹을 수밖에 없는 숙명(must be used) 그 자체의 상황들도 여럿 맞게 됩니다. 이를테면:
+> 보편적인 방식인 '계승된 가변성(inherited mutability)', 오직 가변 대여를 통해 독점된 소유권 하에서만 값을 변경하도록 엄격히 통제하는 이 모델은 Rust 초창기에 설계된 가장 핵심적인 언어 요소(one of the key language elements)입니다. 이는 파편화된 다중 포인터의 데이터 경합 현상(pointer aliasing)을 정적으로 원천 봉쇄(statically preventing)하여 런타임 크래쉬(crash bugs)를 강력하게 억제(reason strongly)하는 일등 공신입니다. 그 덕에 보통 계승된 가변성 모델이 항상 우선으로 권장(preferred)되며, 내부 가변성(interior mutability) 스킬은 어쩔 수 없이 사용해야 하는 최후의 보루(last resort)처럼 여겨지는 것이 이치에 맞습니다. 하지만, 때로는 이 편법 스킬이 아주 유용하게 쓰이거나 심지어 구조상 반드시 쓰일 수밖에 없는 숙명(must be used)인 영역도 존재합니다. 내부 가변성을 허용(enable mutation)해야만 설계가 온전히 굴러가는 전형적인 사례들은 다음과 같습니다:
 >
-> * 도저히 답이 안 나오는 불변 공유 참조 자산들(shared types) 집단 한가운데 심장에 그럴싸한 야매 가변 시드 뿌리 연무 계승 공작(Introducing inherited mutability roots) 은닉 씨앗 투척.
-> * 겉표면은 엄숙한 순결 '안 건드립니다 논리적-불변성(logically-immutable methods)' 딱지를 달아놓고선 실질 뒤에선 쪼금 가변 치워야 할 사정 숨긴 뒷처리 로직 구현 실세(Implementation details).
-> * Clone 구현체 구성을 필히 찢고 개조 수술 변조(Mutating implementations of Clone)해야 할 슬픈 운명 시점.
+> * 공유된 타입 안쪽에 슬쩍 가변의 뿌리(roots)를 밀반입해 넣기 (Introducing inherited mutability roots to shared types).
+> * 표면적으론 불변(logically-immutable methods)이지만 실질 내부적으론 변경이 필요한 꼼수 뒷정리 로직(Implementation details).
+> * 기본 `Clone` 구현의 규약을 깨고 내부적으로 훼손 변조(Mutating implementations of Clone)하는 시점.
 >
-> ## 공유된 타입 안쪽에 슬쩍 가변의 뿌리(roots)를 밀반입해 이식하기 (Introducing inherited mutability roots to shared types)
+> ## 공유된 타입 안쪽에 슬쩍 가변의 뿌리 들여오기 (Introducing inherited mutability roots to shared types)
 >
-> 우리가 그토록 사랑해 마지않는 `Rc<T>` 랑 `Arc<T>` 형제 자매 같은 스마트 포인터 타입들(Shared smart pointer types) 부류 집단은, 여럿 당사자 패거리 녀석끼리(mutiple parties) 마음껏 씹고 뜯고 복제 분신(cloned and shared) 시전 퍼나르는 기가 막힌 방패 용기(containers)를 제공해 줍니다. 헌데 이 포장지 안쪽 용접 내장 깊숙이 박힌 내용 알맹이 값 덩어리(contained values)의 운명을 고심 감정해 보건대, 이 녀석들은 세상 천지 사방 무더기 다발 다면 포인터 별칭들에게 중복 노출 공유(multiply-aliased) 될 운명을 전제하고 깔기 때문에, 무조건 영원히 무기력한 단순 '공유 참조자' 계급 신분으로만 엮여 파생 대여(borrowed)만 성립될 뿐, 절대 그 위에 쌍도끼 도륙살의 변조 가변 전용 패스 `&mut` 권력 인가권 대출(not mutable references) 위임 따위는 원천 봉쇄 박탈 상태입니다. 고로 앞서 설명한 이 치트 무기 셀(cells) 부류 세트 도구들이 만약 아예 없었더라면(Without cells), 그 튼튼한 무적 다중 방어막 공유 철갑 박스(shared boxes) 장막 내부 안에 잠긴 알맹이 데이터에 가변 칼침(mutate data) 조작 수술의 은혜를 투사하는 발상 자체가 완전 정말  불가능 영원 봉인(impossible at all!) 처방 불가 낙인이 자명할 뿐입니다!
+> `Rc<T>` 나 `Arc<T>` 같은 공유 스마트 포인터 타입들(Shared smart pointer types)을 사용하면 데이터를 무수히 많은 패거리(mutiple parties)에 손쉽게 복제 배포(cloned and shared)할 수 있습니다. 그러나 이 스마트 포인터 내부의 캡슐 데이터(contained values)는 수많은 포인터의 중복 노출을 감안하여(multiply-aliased) 그 억압된 특성상 언제나 일반 공유 참조자로만 빌생(borrowed)되며 절대 가변형 참조 모드로 뚫려 나오지(not mutable references) 못합니다. 이 말은 곧 앞선 '셀(cells)' 장치들의 도움이 아예 없다면(Without cells), 저 튼튼한 공유 스마트 상자(shared boxes) 안의 데이터를 찢고 조작 가변(mutate data)하는 일 자체가 애초에 완전히 통제 절대 불가능(impossible at all!) 상태에 놓이게 된다는 걸 의미합니다.
 >
-> 하지만 그래서 우린 찌질한 기행 꼼수를 씁니다, 이 철갑 스마트 포인터 타입 형편없는 것 구조물 안쪽 단전 후미진 틈바구니 알맹이 핵심 코어 영역을 고의로 은밀히 파내어 `RefCell<T>` 암막 치트 장치 모듈 하나를 박아놓고 접합 기생 장식시켜 버림으로써, 무적 가변 파괴 투영권 부활 스파크의 숨통(reintroduce mutability) 이종 접합 이식을 쿨하게 재가동 연성해 내는 방식의 설계 편법 야매 길루트야말로 너무나도 일상적이고 흔해 빠지게(very common) 통용되는 바이블 국밥 잡학 편법 도구 그 자체입니다:
+> 따라서 우리는 `RefCell<T>` 트로이 목마를 덤으로 접합 기생시켜, 철갑 스마트 포인터 상자의 배를 가르고 무적 가변 파괴 투영권(reintroduce mutability)을 다시 살려내는 이종 교배 마법을 씁니다. 이런 식의 우회 설계 패턴은 아주 흔하게 쓰이는 교과서적인 통용 방책(very common)입니다:
 >
 > ```rust ,ignore
 > use std::collections::HashMap;
@@ -129,7 +129,7 @@ error[E0609]: no field `next` on type `std::rc::Rc<std::cell::RefCell<fourth::No
 > }
 > ```
 >
-> 콕 찝어 꼭 유념해 주실 건, ಈ 잡코딩 예제 형편없는 것 장난감 도구 놀음 세트(this example)에는 어디 감히 다중 난입 전용 철갑 `Arc<T>` 방패 구조 대신, 초식 전용 찌질이 `Rc<T>` 녀석을 장비했는지 주시(Note that) 명심하셔야 한단 점입니다. 애초 구제불능의 `RefCell<T>`s 사설 기계 시스템 자체 태생 한계 부품 수급 쪼가리가 무조건 고작해야 평화로운 한 줄기 흐름의 소박한 싱글 채널 노숙 전용 환경 제어 단일 스레드 무대 전용 칩셋(for single-threaded scenarios) 도구에 불과 한정 규정이기 때문입니다. 진짜 피 튀기고 다중 아수라 폭발 멀티 깽판 터지는 난전 병렬 헬파이어 전장 한복판 상황(multi-threaded situation)에서 저따구 분산 공유 무지성 난장 가변 투척의 폭력 가혹 쾌감 공유(shared mutability) 조작 니즈 스릴 욕구 뽕이 밀려 올라오신다면 얌전히 제발 부탁이니 `Mutex<T>` (뮤텍스 괴물형 자물쇠)님을 영접 장착 고려 참배 모셔 두시길(Consider using) 진심으로 싹싹 빕니다.
+> 한 가지 유념하실 점은, 이 예제(this example) 코드는 다중 스레드 장갑차 `Arc<T>` 방패 대신 단일 스레드용 `Rc<T>` 녀석을 장착(Note that)했다는 점입니다. `RefCell<T>`는 기본적으로 한 개의 소박하고 통제된 단일 스레드 환경(for single-threaded scenarios)에만 알맞도록 만들어졌기 때문입니다. 진짜 무자비하게 난장판이 벌어지는 멀티 스레드 병렬 생태계(multi-threaded situation) 속에서 저런 스릴 넘치는 공유 가변 무대(shared mutability) 조작질이 필요하시다면 애초에 `Mutex<T>` 장비 사용을 먼저 고려(Consider using)하십시오.
 
 이야, Rust 공식 가이드 문서 선생님들의 설명(docs) 클라스는 끝장나게 압권이네요 (continue to be incredibly awesome).
 
